@@ -10,15 +10,43 @@ import {
 } from '@patternfly/react-core';
 
 import { useState } from 'react';
+
 import FileUpload from '@/components/Stage1/FileUpload';
+import Table from '@/components/Table';
+import type { Column } from '@/components/Table';
 
 interface Stage1Props {
   workspaceFiles: File[];
 }
 
+type fileEntry = {
+  name: string;
+  type: string;
+  size: string;
+};
+
 const Stage1: React.FunctionComponent<Stage1Props> = ({ workspaceFiles }) => {
 
   const [files, setFiles] = useState<File[]>([]);
+
+  const columns: Column<fileEntry>[] = [
+    { header: "Name", accessor: "name", type: "expands" },
+    { header: "Type", accessor: "type", type: "md" },
+    { header: "Size", accessor: "size", type: "sm" }
+  ];
+
+  const data: fileEntry[] = [
+    { name: "03_BofA_InterestChecking_en_ADA", type: "Markdown", size: "36KB" },
+    { name: "04_Rewards_Money_Market_Savings", type: "Markdown", size: "18KB" },
+    { name: "03_BofA_InterestChecking_en_ADA", type: "Markdown", size: "36KB" },
+    { name: "04_Rewards_Money_Market_Savings", type: "Markdown", size: "18KB" },
+    { name: "03_BofA_InterestChecking_en_ADA", type: "Markdown", size: "36KB" },
+    { name: "04_Rewards_Money_Market_Savings", type: "Markdown", size: "18KB" },
+    { name: "03_BofA_InterestChecking_en_ADA", type: "Markdown", size: "36KB" },
+    { name: "04_Rewards_Money_Market_Savings", type: "Markdown", size: "18KB" },
+    { name: "03_BofA_InterestChecking_en_ADA", type: "Markdown", size: "36KB" },
+    { name: "04_Rewards_Money_Market_Savings", type: "Markdown", size: "18KB" }
+  ]
 
   return (
     <Flex direction={{ default: 'column' }} rowGap={{ default: 'rowGap2xl'}}>
@@ -44,6 +72,9 @@ const Stage1: React.FunctionComponent<Stage1Props> = ({ workspaceFiles }) => {
           </FlexItem>
           <FlexItem>
             <Content component='p'>The following files were uploaded in the Markdown format and can be added to the workspace directly</Content>
+          </FlexItem>
+          <FlexItem>
+            <Table<fileEntry> columns={columns} data={data}/>
           </FlexItem>
         </Flex>
       </FlexItem>

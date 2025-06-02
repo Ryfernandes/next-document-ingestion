@@ -21,9 +21,9 @@ const StageManager: React.FunctionComponent<StageManagerProps> = ({ workspaceFil
 
   return (
     <>
-      <Flex style={{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', padding: '3rem', overflow: 'scroll'}}>
+      <Flex style={{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', padding: '3rem', overflow: 'scroll', justifyContent: 'center'}}>
         {stage === 1 && (
-          <FlexItem style={{ width: '100%' }}>
+          <FlexItem style={{ width: '100%', maxWidth: '1800px' }}>
             <Stage1 workspaceFiles={workspaceFiles}/>
           </FlexItem>
         )}
