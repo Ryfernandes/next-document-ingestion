@@ -1,18 +1,21 @@
+// src/app/v1/page.tsx
+
 'use client';
 
-import MultipleFileUploadBasic from '@/components/FileUpload/MultipleFileUpload';
-import{ Stack, StackItem } from '@patternfly/react-core';
+import Documents from '@/components/FileUpload/Documents';
+import { 
+  Stack, 
+  StackItem 
+} from '@patternfly/react-core';
+import { useState } from 'react';
 
 const Page = () => {
+  const [documents, setDocuments] = useState<File[]>([]);
+
   return (
-    <Stack hasGutter>
-      <StackItem>
-        Step 1: Document Upload
-      </StackItem>
-      <StackItem>
-        <MultipleFileUploadBasic/>
-      </StackItem>
-    </Stack>
+    <div style={{ padding: '3rem'}}>
+      <Documents/>
+    </div>
   )
 }
 

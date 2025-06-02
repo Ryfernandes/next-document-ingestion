@@ -1,3 +1,5 @@
+// src/app/layout.tsx
+
 import { ReactNode } from 'react';
 import '@patternfly/react-core/dist/styles/base.css';
 
