@@ -209,6 +209,7 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
       {showDuplicatesModal && (
         <Modal
           isOpen
+          disableFocusTrap
           variant="medium"
           aria-label="duplicate file names warning"
           aria-labelledby="duplicate-file-names-warning-title"

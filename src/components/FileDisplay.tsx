@@ -17,7 +17,7 @@ const FileDisplay: React.FunctionComponent<FileDisplayProps> = ({ files }) => {
       <Content component="h2">Your markdown files:</Content>
       {files.length > 0 ? (
         files.map(file => (
-          <Flex key={file.name} columnGap={{ default: 'columnGapSm'}}>
+          <Flex key={file.name} columnGap={{ default: 'columnGapSm' }}>
             <FlexItem>
               <Content component='p'> 
                 {file.name}

@@ -8,7 +8,7 @@
   width: 100%;
   display: flex;
   overflow-y: auto;
-  max-height: 200px;
+  max-height: 315px;
 }
 
 .table-header {
@@ -33,11 +33,35 @@
   flex: 1;
 }
 
+.table-column.remove {
+  width: 50px;
+}
+
 .header-cell {
-  padding: 0.25rem 0.5rem;
+  padding: 0.5rem;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  transition: background-color 0.1s ease;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.header-cell.remove {
+  justify-content: center;
+}
+
+.header-cell.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.header-cell.clickable:hover {
+  background-color: #f0f0f0;
+}
+
+.header-cell.clickable:active {
+  background-color: #e0e0e0;
 }
 
 .body-cell {
@@ -48,18 +72,51 @@
   transition: background-color 0.1s ease;
 }
 
+.body-cell.remove {
+  padding: 0.65rem 0.3rem;
+  display: flex;
+  justify-content: center;
+}
+
+.normal-x {
+  padding: 0.1rem 0.2rem;
+}
+
+.clickable-x {
+  cursor: pointer;
+}
+
+.clickable-x:hover {
+  font-weight: 450;
+}
+
+.clickable-x:active {
+  transform: scale(0.95);
+}
+
 .body-cell.clicked {
   background-color: #f6f6f6;
 }
 
 .body-cell.hovered {
-  background-color: #f0f0f0;
+  background-color: #f2f2f2;
 }
 
 .body-cell.active {
-  background-color: #e0e0e0;
+  background-color: #e6e6e6;
 }
 
-.table-body:hover {
+.no-select {
+  user-select: none;
+}
+
+.pointer {
   cursor: pointer;
+}
+
+.no-content {
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  text-align: center;;
+  width: 100%;
 }
