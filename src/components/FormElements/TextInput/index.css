@@ -1,0 +1,22 @@
+.text-input {
+  border: 1px solid #b0b0b0;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  width: min(100%, 400px);
+}
+
+.text-input:focus {
+  outline: 1px auto #b0b0b0;
+}
+
+.helper-text {
+  font-size: 0.75rem;
+  color: #666666;
+  margin-top: 0.25rem;
+  padding-left: 0.5rem;
+  max-width: min(100%, 400px);
+}
+
+.helper-text.error {
+  color: #ee0000;
+}

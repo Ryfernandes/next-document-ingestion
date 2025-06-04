@@ -1,0 +1,154 @@
+.table-container {
+  padding: 1rem 2rem;
+  background-color: white;
+  border-radius: 1rem;
+}
+
+.table-body {
+  width: 100%;
+  display: flex;
+  overflow-y: auto;
+  max-height: 315px;
+}
+
+.table-header {
+  width: 100%;
+  display: flex;
+  border-bottom: 1px solid #cccccc;
+  overflow-y: auto;
+}
+
+.table-column.sm {
+  width: 100px;
+}
+
+.table-column.md {
+  width: 200px;
+}
+
+.table-column.lg {
+  width: 300px;
+}
+
+.table-column.expands {
+  flex: 1;
+}
+
+.table-column.remove {
+  width: 50px;
+}
+
+.header-cell {
+  padding: 0.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background-color 0.1s ease;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.header-cell.center {
+  justify-content: center;
+  gap: 0rem;
+}
+
+.header-cell.remove {
+  justify-content: center;
+}
+
+.header-cell.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.header-cell.clickable:hover {
+  background-color: #f0f0f0;
+}
+
+.header-cell.clickable:active {
+  background-color: #e0e0e0;
+}
+
+.body-cell {
+  padding: 0.75rem 0.5rem;
+  display: flex;
+  align-items: center;
+  height: 50px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background-color 0.1s ease;
+}
+
+.body-cell.center {
+  width: 100%;
+  justify-content: center;
+}
+
+.body-cell.remove {
+  padding: 0.65rem 0.3rem;
+  display: flex;
+  justify-content: center;
+}
+
+.normal-x {
+  padding: 0.1rem 0.2rem;
+}
+
+.clickable-x {
+  cursor: pointer;
+}
+
+.clickable-x:hover {
+  font-weight: 450;
+}
+
+.clickable-x:active {
+  transform: scale(0.95);
+}
+
+.body-cell.clicked {
+  background-color: #f6f6f6;
+}
+
+.body-cell.hovered {
+  background-color: #f2f2f2;
+}
+
+.body-cell.active {
+  background-color: #e6e6e6;
+}
+
+.no-select {
+  user-select: none;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.no-content {
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  text-align: center;;
+  width: 100%;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.action-button:hover {
+  transform: scale(1.02);
+}
+
+.action-button:active {
+  transform: scale(0.95);
+}

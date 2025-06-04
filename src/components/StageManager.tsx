@@ -11,15 +11,17 @@ import {
 import { useState } from 'react';
 
 import Stage1 from './Stage1';
+import Stage2 from './Stage2';
 import FileDisplay from './FileDisplay';
 
 interface StageManagerProps {
   workspaceFiles: File[];
   setConversionActive?: (active: boolean) => void;
+  startStage?: number;
 }
 
-const StageManager: React.FunctionComponent<StageManagerProps> = ({ workspaceFiles, setConversionActive }) => {
-  const [stage, setStage] = useState(1);
+const StageManager: React.FunctionComponent<StageManagerProps> = ({ workspaceFiles, setConversionActive, startStage }) => {
+  const [stage, setStage] = useState(startStage || 1);
   const [finishedFiles, setFinishedFiles] = useState<File[]>([]);
   const [toConvert, setToConvert] = useState<File[]>([]);
 
@@ -47,6 +49,11 @@ const StageManager: React.FunctionComponent<StageManagerProps> = ({ workspaceFil
         {stage === 1 && (
           <FlexItem style={{ width: '100%', maxWidth: '1800px' }}>
             <Stage1 workspaceFiles={workspaceFiles} nextStage={changeStage}/>
+          </FlexItem>
+        )}
+        {stage == 2 && (
+          <FlexItem style={{ width: '100%', maxWidth: '1800px' }}>
+            <Stage2 workspaceFiles={workspaceFiles} nextStage={changeStage}/>
           </FlexItem>
         )}
       </Flex>
