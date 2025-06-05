@@ -1,4 +1,4 @@
-// src/components/FormElements/TextInput/index.tsx
+// src/components/FormElements/TextArea/index.tsx
 
 'use client';
 
@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 
 import './index.css';
 
-interface TextInputProps {
+interface TextAreaProps {
   placeholder?: string;
   value: string;
   setValue: (value: string) => void;
@@ -15,7 +15,7 @@ interface TextInputProps {
   disabled?: boolean;
 }
 
-export const TextInput: React.FunctionComponent<TextInputProps> = ({ placeholder, value, setValue, errors, maxCharacters, disabled }) => {
+export const TextArea: React.FunctionComponent<TextAreaProps> = ({ placeholder, value, setValue, errors, maxCharacters, disabled }) => {
   const [helperText, setHelperText] = useState<string>("");
 
   useEffect(() => {
@@ -30,12 +30,12 @@ export const TextInput: React.FunctionComponent<TextInputProps> = ({ placeholder
   
   return (
     <>
-      <input
-        type="text"
+      <textarea
         placeholder={placeholder || "Enter text..."}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="text-input"
+        className="text-area"
+        rows={4}
         disabled={disabled}
       />
       {helperText.length > 0 && (

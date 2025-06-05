@@ -13,8 +13,9 @@ export type conversionProfile = {
   do_picture_classification: boolean;
   do_picture_description: boolean;
   do_table_structure: boolean;
-  md_page_break_placeholder?: string | null;
+  md_page_break_placeholder: string;
   settings?: string | null;
+  id: number;
 }
 
 export type conversionProfileDisplay = {
@@ -55,8 +56,27 @@ export const getConversionProfileDisplay = (profile: conversionProfile): convers
     enrichment: profile.do_code_enrichment ? (profile.do_formula_enrichment ? "Code & Formulas" : "Code") : (profile.do_formula_enrichment ? "Formulas" : "None"),
     picture_options: profile.do_picture_classification ? (profile.do_picture_description ? "Classify & Describe" : "Classify") : (profile.do_picture_description ? "Describe" : "None"),
     do_tables: profile.do_table_structure ? "ON" : "OFF",
-    page_breaks: profile.md_page_break_placeholder ? "Placeholder" : "None"
+    page_breaks: profile.md_page_break_placeholder.length > 0 ? "Placeholder" : "None"
   }
+}
+
+export const creationDefault: conversionProfile = {
+  editable: true,
+  alias: "",
+  image_export_mode: "embedded",
+  pipeline: "standard",
+  ocr_engine: "easyocr",
+  pdf_backend: "dlparse_v4",
+  table_mode: "fast",
+  do_ocr: true,
+  force_ocr: false,
+  do_code_enrichment: false,
+  do_formula_enrichment: false,
+  do_picture_classification: false,
+  do_picture_description: false,
+  do_table_structure: true,
+  md_page_break_placeholder: "",
+  id: -1
 }
 
 export const defaultConversionProfiles: conversionProfile[] = [
@@ -75,6 +95,8 @@ export const defaultConversionProfiles: conversionProfile[] = [
     do_picture_classification: false,
     do_picture_description: false,
     do_table_structure: true,
+    md_page_break_placeholder: "",
+    id: 0
   },
   {
     editable: false,
@@ -91,6 +113,8 @@ export const defaultConversionProfiles: conversionProfile[] = [
     do_picture_classification: false,
     do_picture_description: false,
     do_table_structure: true,
+    md_page_break_placeholder: "",
+    id: 1,
   },
   {
     editable: false,
@@ -107,6 +131,8 @@ export const defaultConversionProfiles: conversionProfile[] = [
     do_picture_classification: false,
     do_picture_description: false,
     do_table_structure: true,
+    md_page_break_placeholder: "",
+    id: 2
   },
   {
     editable: false,
@@ -123,9 +149,11 @@ export const defaultConversionProfiles: conversionProfile[] = [
     do_picture_classification: true,
     do_picture_description: true,
     do_table_structure: true,
+    md_page_break_placeholder: "",
+    id: 3
   },
   {
-    editable: true,
+    editable: false,
     alias: "VLM",
     image_export_mode: "embedded",
     pipeline: "vlm",
@@ -139,22 +167,26 @@ export const defaultConversionProfiles: conversionProfile[] = [
     do_picture_classification: false,
     do_picture_description: false,
     do_table_structure: true,
-  },
-  {
-    editable: true,
-    alias: "Longest",
-    image_export_mode: "placeholder",
-    pipeline: "standard",
-    ocr_engine: "tesseract_cli",
-    pdf_backend: "dlparse_v4",
-    table_mode: "accurate",
-    do_ocr: false,
-    force_ocr: false,
-    do_code_enrichment: false,
-    do_formula_enrichment: false,
-    do_picture_classification: false,
-    do_picture_description: false,
-    do_table_structure: true,
+    md_page_break_placeholder: "",
+    id: 4
   }
 ]
 
+export const equivalentConversionProfiles = (a: conversionProfile, b: conversionProfile): boolean => {
+  return (
+    a.alias === b.alias &&
+    a.image_export_mode === b.image_export_mode &&
+    a.pipeline === b.pipeline &&
+    a.ocr_engine === b.ocr_engine &&
+    a.pdf_backend === b.pdf_backend &&
+    a.table_mode === b.table_mode &&
+    a.do_ocr === b.do_ocr &&
+    a.force_ocr === b.force_ocr &&
+    a.do_code_enrichment === b.do_code_enrichment &&
+    a.do_formula_enrichment === b.do_formula_enrichment &&
+    a.do_picture_classification === b.do_picture_classification &&
+    a.do_picture_description === b.do_picture_description &&
+    a.do_table_structure === b.do_table_structure &&
+    a.md_page_break_placeholder === b.md_page_break_placeholder
+  )
+}

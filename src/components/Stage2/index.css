@@ -1,0 +1,12 @@
+.eye {
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.eye:hover {
+  transform: scale(1.02);
+}
+
+.eye:active {
+  transform: scale(0.95);
+}
