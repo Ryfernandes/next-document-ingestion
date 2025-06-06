@@ -13,8 +13,16 @@ import {
   Content
 } from '@patternfly/react-core';
 
+import { DropdownMenu } from '@/components/FormElements/DropdownMenu';
+
 export type DefaultDisplay = {
   type: "default";
+}
+
+export interface Dropdown<T> {
+  type: "dropdown-menu";
+  options: { label: string, id: number }[];
+  onChange: ( id: number, selectedRows: T[] ) => void;
 }
 
 export interface ActionButton<T> {
@@ -23,7 +31,7 @@ export interface ActionButton<T> {
   innerComponent: React.ReactNode;
 }
 
-export type ColumnDisplay<T> = DefaultDisplay | ActionButton<T>;
+export type ColumnDisplay<T> = DefaultDisplay | ActionButton<T> | Dropdown<T>;
 
 export type Column<T, TDisplay> = {
   header: string;
@@ -67,6 +75,8 @@ function Table<T, TDisplay>({ columns, data, reconcileData, noContentText, remov
   const [toRemove, setToRemove] = useState<number[]>([]);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
 
+  const [oldDataLength, setOldDataLength] = useState<number>(data.length);
+
   const tableRef = useRef<HTMLDivElement>(null);
 
   const isDefaultDisplay = (display: ColumnDisplay<T>): display is DefaultDisplay => {
@@ -75,6 +85,10 @@ function Table<T, TDisplay>({ columns, data, reconcileData, noContentText, remov
 
   const isActionButton = (display: ColumnDisplay<T>): display is ActionButton<T> => {
     return display.type === 'action-button';
+  }
+
+  const isDropdown = (display: ColumnDisplay<T>): display is Dropdown<T> => {
+    return display.type === 'dropdown-menu';
   }
 
   const getRowRange = (start: number, end: number): number[] => {
@@ -269,6 +283,14 @@ function Table<T, TDisplay>({ columns, data, reconcileData, noContentText, remov
     }
   }, [data, sortBy, sortDirection]);
 
+  useEffect(() => {
+    if (sortedData.length > oldDataLength) {
+      tableRef.current?.scrollTo({ top: tableRef.current.scrollHeight });
+    }
+
+    setOldDataLength(sortedData.length);
+  }, [sortedData]);
+
   return (
     <div className='table-container'>
       <div className='table-header'>
@@ -292,7 +314,7 @@ function Table<T, TDisplay>({ columns, data, reconcileData, noContentText, remov
           </div>
         )}
       </div>
-      <div className='table-body' onMouseLeave={cleanUpTable} ref={tableRef} onClick={handleTableClick}>
+      <div className={`table-body ${sortedData.length <= 6 && 'show-overflow'}`} onMouseLeave={cleanUpTable} ref={tableRef} onClick={handleTableClick}>
         {columns.map((column, columnIndex) => (
           <div className={`table-column ${!column.type.includes("custom") && column.type}`} style={column.type.includes('custom') ? { width: `${column.type.split('-')[1]}px` } : undefined} key={columnIndex}>
             {sortedData.map((row, rowIndex) => {
@@ -311,6 +333,18 @@ function Table<T, TDisplay>({ columns, data, reconcileData, noContentText, remov
                     </div>
                   </div>
               )};
+              if (isDropdown(column.display)) {
+                const dropdownDisplay = column.display as Dropdown<T>;
+                return (
+                  <div key={rowIndex} onMouseDown={() => handleMouseDown(rowIndex)} onMouseUp={handleMouseUp} onMouseLeave={() => handleMouseLeave()} onMouseEnter={() => handleMouseEnter(rowIndex)} className={`body-cell ${isControlDown && "pointer"} ${isShiftDown && "no-select"} ${rowIndex === activeRow && 'active'} ${rowIndex === hoveredRow && 'hovered'} ${selectedRows.includes(rowIndex) && 'clicked'}`}>
+                    <DropdownMenu
+                      options={dropdownDisplay.options.map((entry) => ({ label: entry.label, value: entry.id.toString() }))}
+                      value={String(row.value[column.data_accessor])}
+                      setValue={(value) => dropdownDisplay.onChange(parseInt(value), selectedRows.includes(rowIndex) ? selectedRows.map(num => sortedData[num].value) : [row.value])}
+                    />
+                  </div>
+                )
+              }
             })}
           </div>
         ))}

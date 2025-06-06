@@ -19,7 +19,7 @@ import './index.css';
 
 import InfoIcon from '@patternfly/react-icons/dist/esm/icons/info-icon';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Table from '@/components/Table2';
 import type { Column, DefaultDisplay, ActionButton } from '@/components/Table2';
@@ -34,15 +34,39 @@ import { DropdownMenu } from '@/components/FormElements/DropdownMenu';
 import { Checkbox } from '@/components/FormElements/Checkbox';
 import { TextArea } from '@/components/FormElements/TextArea';
 
-interface Stage2Props {
-  workspaceFiles: File[];
-  nextStage: (files: File[]) => void;
+type fileProfileDisplay = {
+  name: string;
+  type: string;
+  size: string | number;
+  profile: string;
+};
+
+type fileProfileData = {
+  name: string;
+  type: string;
+  size: string | number;
+  profileId: number;
+};
+
+type conversionPackage = {
+  file: File;
+  profileId: number;
 }
 
-const Stage1: React.FunctionComponent<Stage2Props> = ({ workspaceFiles, nextStage }) => {
-  const [files, setFiles] = useState<File[]>([]);
+export type fullConversionPackage = {
+  file: File;
+  profile: conversionProfile;
+}
 
+interface Stage2Props {
+  toConvert: File[];
+  nextStage: (packages: fullConversionPackage[]) => void;
+  previousStage: () => void;
+}
+
+const Stage1: React.FunctionComponent<Stage2Props> = ({ toConvert, nextStage, previousStage }) => {
   const [conversionProfiles, setConversionProfiles] = useState<conversionProfile[]>(defaultConversionProfiles);
+  const [conversionPackages, setConversionPackages] = useState<conversionPackage[]>(toConvert.map(entry => ({ file: entry, profileId: 5})));
 
   const [originalModalProfile, setOriginalModalProfile] = useState<conversionProfile | null>(null);
   const [modalProfile, setModalProfile] = useState<conversionProfile | null>(null);
@@ -57,6 +81,50 @@ const Stage1: React.FunctionComponent<Stage2Props> = ({ workspaceFiles, nextStag
   const [showSaveWarning, setShowSaveWarning] = useState<boolean>(false);
 
   const [showProfilesSection, setShowProfilesSection] = useState<boolean>(true);
+
+  const fileTypeTranslations: { [key: string]: string } = {
+    'application/pdf': 'PDF',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PPTX',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+    'image/*': 'Image',
+    'text/html': 'HTML',
+    'text/asciidoc': 'AsciiDoc',
+    'text/markdown': 'Markdown'
+  }
+
+  const sizeForDisplay = (size: number): string => {
+    if (size < 1024) {
+      return `${size} B`;
+    } else if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(2)} KB`;
+    } else if (size < 1024 * 1024 * 1024) {
+      return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+    } else {
+      return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    }
+  }
+
+  const handleBack = () => {
+    previousStage();
+  }
+
+  const handleFileConvert = () => {
+    const fullPackages: fullConversionPackage[] = conversionPackages.map(pkg => {
+      const profile = conversionProfiles.find(p => p.id === pkg.profileId);
+      if (!profile) {
+        throw new Error(`Conversion profile with ID ${pkg.profileId} not found`);
+      }
+      return { file: pkg.file, profile: profile };
+    });
+    nextStage(fullPackages);
+  }
+
+  const updateConversionPackages = (profileId: number, rows: fileProfileData[]) => {
+    const selectedFilenames = rows.map(r => r.name);
+
+    setConversionPackages(prev => prev.map(pkg => selectedFilenames.includes(pkg.file.name) ? { ...pkg, profileId: profileId } : pkg));
+  }
 
   const getId = () => {
     const takenIds = conversionProfiles.map(profile => profile.id);
@@ -190,6 +258,12 @@ const Stage1: React.FunctionComponent<Stage2Props> = ({ workspaceFiles, nextStag
     { header: "Table Mode", data_accessor: "table_mode", display_accessor: "table_mode", type: "custom-130", display: { type: "default" } },
   ];
 
+  useEffect(() => {
+    const conversionIds = conversionProfiles.map(p => p.id);
+    const updatedPackages = conversionPackages.map(pkg => conversionIds.includes(pkg.profileId) ? pkg : { ...pkg, profileId: 0 });
+    setConversionPackages(updatedPackages);
+  }, [conversionProfiles]);
+
   return (
     <>
       <Flex direction={{ default: 'column' }} rowGap={{ default: 'rowGap2xl'}}>
@@ -211,7 +285,7 @@ const Stage1: React.FunctionComponent<Stage2Props> = ({ workspaceFiles, nextStag
                 <FlexItem>
                   <Content component='h2'>Manage conversion profiles</Content>
                 </FlexItem>
-                <FlexItem style={{ width: '30px', transform: 'translateY(9px)'}}>
+                <FlexItem style={{ width: '20px', transform: 'translateY(4.5px)'}}>
                   {showProfilesSection ? (
                     <div className='eye' onClick={() => setShowProfilesSection(false)}>
                       <EyeIcon/>
@@ -240,7 +314,7 @@ const Stage1: React.FunctionComponent<Stage2Props> = ({ workspaceFiles, nextStag
                     reconcileData={setConversionProfiles} 
                     noContentText={"No conversion profiles"}
                     removeTitles={["Remove profile?", "Remove all?", "Remove selected profiles?"]}
-                    removeTexts={["Are you sure you want to remove this conversion profile?", "Are you sure you want to remove all non-default conversion profiles? Red Hat-provided defaults will remain intact", "Are you sure you want to remove these conversion profiles? Default conversion profiles will not be removed"]}
+                    removeTexts={['Are you sure you want to remove this conversion profile? Any files using this conversion profile will be changed to "Default"', 'Are you sure you want to remove all non-default conversion profiles? Any files using these conversion profiles will be changed to "Default". Red Hat-provided defaults will remain intact', 'Are you sure you want to remove these conversion profiles? Any files using these conversion profiles will be changed to "Default". Red Hat-provided defaults will not be removed']}
                     removeButton
                   />
                 </FlexItem>
@@ -251,6 +325,73 @@ const Stage1: React.FunctionComponent<Stage2Props> = ({ workspaceFiles, nextStag
                 </FlexItem>
               </>
             )}
+          </Flex>
+        </FlexItem>
+
+        <FlexItem>
+          <Flex direction={{ default: 'column' }} rowGap={{ default: 'rowGapMd'}}>
+            <FlexItem>
+              <Content component='h2'>Assign conversion profiles</Content>
+            </FlexItem>
+            <FlexItem>
+              <Content component='p'>Specify the settings to be used to convert each document by assigning them conversion profiles. Conversion profiles are created/managed above</Content>
+            </FlexItem>
+            <FlexItem>
+              <HelperText>
+                <HelperTextItem icon={<InfoIcon />}>
+                  Tip! Select multiple files with SHIFT and CTRL and use one drop down to set the conversion profile for all of the files
+                </HelperTextItem>
+              </HelperText>
+            </FlexItem>
+            <FlexItem>
+              <Table<fileProfileData, fileProfileDisplay> 
+                columns={[
+                  { header: "Name", data_accessor: "name", display_accessor: "name", type: "expands", display: { type: "default" } },
+                  { header: "Type", data_accessor: "type", display_accessor: "type", type: "md", display: { type: "default" } },
+                  { header: "Size", data_accessor: "size", display_accessor: "size", type: "sm", display: { type: "default" } },
+                  { header: "Conversion Profile", data_accessor: "profileId", display_accessor: "profile", type: "custom-420", 
+                    display: { 
+                      type: "dropdown-menu",
+                      options: conversionProfiles.map(p => ({ label: p.alias, id: p.id })),
+                      onChange: updateConversionPackages
+                    }
+                  },
+                ]} 
+                data={conversionPackages.map((pkg, index) => ({
+                  value: {
+                    name: pkg.file.name,
+                    type: pkg.file.type,
+                    size: pkg.file.size,
+                    profileId: pkg.profileId
+                  }, 
+                  display: {
+                    name: pkg.file.name,
+                    type: fileTypeTranslations[pkg.file.type],
+                    size: sizeForDisplay(pkg.file.size),
+                    profile: conversionProfiles.find(p => p.id === pkg.profileId)?.alias || "Unknown"
+                  },
+                }))}
+                reconcileData={() => {}}
+                noContentText="No uploads of this type"
+                removeTitles={[]}
+                removeTexts={[]}
+              />
+            </FlexItem>
+          </Flex>
+        </FlexItem>
+
+        <FlexItem>
+          <Flex gap={{ default: 'gapSm' }}>
+            <FlexItem>
+              <Button variant="secondary" onClick={handleBack}>
+                Back
+              </Button>
+            </FlexItem>
+            <FlexItem>
+              <Button variant="primary" onClick={handleFileConvert}>
+                Convert files
+              </Button>
+            </FlexItem>
           </Flex>
         </FlexItem>
       </Flex>

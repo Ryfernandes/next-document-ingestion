@@ -38,7 +38,7 @@
   overflow-x: auto;
   max-height: 150px;
   display: none;
-  z-index: 10000;
+  z-index: 1000;
 }
 
 .dropdown-menu.open {

@@ -13,7 +13,7 @@ import {
 
 import InfoIcon from '@patternfly/react-icons/dist/esm/icons/info-icon';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import FileUpload from '@/components/Stage1/FileUpload';
 import Table from '@/components/Table';
@@ -21,6 +21,7 @@ import type { Column } from '@/components/Table';
 
 interface Stage1Props {
   workspaceFiles: File[];
+  uploadedFiles: File[];
   nextStage: (files: File[]) => void;
 }
 
@@ -30,9 +31,9 @@ type fileEntry = {
   size: string | number;
 };
 
-const Stage1: React.FunctionComponent<Stage1Props> = ({ workspaceFiles, nextStage }) => {
+const Stage1: React.FunctionComponent<Stage1Props> = ({ workspaceFiles, nextStage, uploadedFiles }) => {
 
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<File[]>(uploadedFiles);
 
   const columns: Column<fileEntry>[] = [
     { header: "Name", accessor: "name", type: "expands", display: "default" },

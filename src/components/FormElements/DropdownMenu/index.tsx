@@ -13,7 +13,9 @@ export const DropdownMenu: React.FunctionComponent<DropdownMenuProps> = ({ optio
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [hoverIndex, setHoverIndex] = useState<number>(-1);
 
-  const toggleMenu = () => {
+  const toggleMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     setMenuOpen(prev => !prev);
   }
 
@@ -43,7 +45,7 @@ export const DropdownMenu: React.FunctionComponent<DropdownMenuProps> = ({ optio
       </button>
       <div className={`dropdown-menu ${menuOpen && 'open'}`}>
         {options.map((option, index) => (
-          <div className={`dropdown-item ${hoverIndex === index && 'hover'}`} onMouseEnter={() => setHoverIndex(index)} onMouseLeave={() => setHoverIndex(-1)} onClick={() => handleSelect(index)} key={index}>
+          <div className={`dropdown-item ${hoverIndex === index && 'hover'}`} onMouseEnter={() => setHoverIndex(index)} onMouseLeave={() => setHoverIndex(-1)} onClick={(e: React.MouseEvent<HTMLDivElement>) => {e.stopPropagation(); handleSelect(index);}} key={index}>
             <div>
               {option.label}
             </div>

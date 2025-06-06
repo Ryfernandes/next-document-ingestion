@@ -11,6 +11,10 @@
   max-height: 315px;
 }
 
+.table-body.show-overflow {
+  overflow-y: visible;
+}
+
 .table-header {
   width: 100%;
   display: flex;
@@ -77,7 +81,7 @@
   height: 50px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  overflow: hidden;
+  overflow: visible;
   transition: background-color 0.1s ease;
 }
 

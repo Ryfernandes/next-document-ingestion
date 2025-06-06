@@ -1,10 +1,8 @@
-// src/app/v3/page.tsx
+// src/app/demo-2/page.tsx
 
 'use client';
 
-import { 
-  Stack, 
-  StackItem,
+import {
   Button
 } from '@patternfly/react-core';
 
@@ -24,11 +22,10 @@ const Page = () => {
   return (
     <>
       {conversionActive ? (
-        <StageManager setConversionActive={setConversionActive} startStage={1} workspaceFiles={markdownFiles}/>
+        <StageManager setConversionActive={setConversionActive} workspaceFiles={markdownFiles}/>
       ) : (
-        <div style={{ padding: '3rem' }}>
-          <Button onClick={handleStartConversion}>Add Markdown Files</Button>
-          <FileDisplay files={markdownFiles} />
+        <div style={{ display: "flex", width: "100%", padding: '3rem', justifyContent: 'center' }}>
+          <Button onClick={handleStartConversion}>Start Demo</Button>
         </div>
       )}
     </>
