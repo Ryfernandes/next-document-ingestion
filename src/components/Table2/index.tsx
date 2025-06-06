@@ -293,7 +293,7 @@ function Table<T, TDisplay>({ columns, data, reconcileData, noContentText, remov
 
   return (
     <div className='table-container'>
-      <div className='table-header'>
+      <div className={`table-header ${sortedData.length > 6 && 'shifted'}`}>
         {columns.map((column, columnIndex) => (
             <div className={`table-column ${!column.type.includes("custom") && column.type}`} style={column.type.includes('custom') ? { width: `${column.type.split('-')[1]}px` } : undefined} key={columnIndex}>
               <div key={columnIndex} className={`header-cell ${column.display.type === "action-button" && "center"} ${sortedData.length && "clickable"}`} onClick={() => setHeaderSort(column)}>

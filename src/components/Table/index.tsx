@@ -248,7 +248,7 @@ function Table<T>({ columns, data, reconcileData, noContentText, removeButton, r
 
   return (
     <div className='table-container'>
-      <div className='table-header'>
+      <div className={`table-header ${sortedData.length > 6 && 'shifted'}`}>
         {columns.map((column, columnIndex) => (
             <div className={`table-column ${column.type}`} key={columnIndex}>
               <div key={columnIndex} className={`header-cell ${sortedData.length && "clickable"}`} onClick={() => setHeaderSort(column)}>

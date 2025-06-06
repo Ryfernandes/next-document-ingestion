@@ -22,6 +22,10 @@
   overflow-y: auto;
 }
 
+.table-header.shifted {
+  padding-right: 17px;
+}
+
 .table-column.sm {
   width: 100px;
 }

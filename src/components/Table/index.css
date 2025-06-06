@@ -17,6 +17,10 @@
   border-bottom: 1px solid #cccccc;
 }
 
+.table-header.shifted {
+  padding-right: 17px;
+}
+
 .table-column.sm {
   width: 100px;
 }
