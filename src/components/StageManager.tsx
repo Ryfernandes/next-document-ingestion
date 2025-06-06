@@ -40,6 +40,9 @@ const StageManager: React.FunctionComponent<StageManagerProps> = ({ workspaceFil
     if (stage === 2 && packages) {
       setConversionPackages(packages);
       alert(`${packages.length} files packaged with conversion settings sent for conversion.`);
+      if (setConversionActive) {
+        setConversionActive(false);
+      }
     }
 
     setStage(prev => prev + 1);
