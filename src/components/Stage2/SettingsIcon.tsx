@@ -1,3 +1,5 @@
+// src/components/Stage2/SettingsIcon.tsx
+
 import Image from 'next/image';
 import settingsGear from '@/public/assets/settings-gear.png';
 

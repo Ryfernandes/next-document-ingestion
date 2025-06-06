@@ -1,3 +1,5 @@
+// src/components/Stage2/EyeOffIcon.tsx
+
 import Image from 'next/image';
 import eyeOff from '@/public/assets/eye-off.png';
 

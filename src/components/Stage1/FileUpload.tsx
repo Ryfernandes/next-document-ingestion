@@ -1,10 +1,5 @@
 // src/components/Stage1/FileUpload.tsx
 
-
-
-
-// Overwrite order flips, but doesn't impact functionality and can be fixed later
-
 'use client';
 
 import { useEffect, useState } from 'react';

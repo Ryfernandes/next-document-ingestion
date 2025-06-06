@@ -1,3 +1,5 @@
+// src/components/Table2/index.tsx
+
 import './index.css';
 
 import { useState, useRef, useEffect } from 'react';

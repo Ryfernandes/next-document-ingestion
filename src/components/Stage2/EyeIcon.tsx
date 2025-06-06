@@ -1,3 +1,5 @@
+// src/components/Stage2/EyeIcon.tsx
+
 import Image from 'next/image';
 import eye from '@/public/assets/eye.png';
 
