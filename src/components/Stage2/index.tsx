@@ -485,7 +485,7 @@ const Stage1: React.FunctionComponent<Stage2Props> = ({ toConvert, nextStage, pr
                         <DropdownMenu
                           options={[
                             { value: 'easyocr', label: 'EasyOCR (default)' },
-                            { value: 'tesseract_cli', label: 'Tesseract CLI' },
+                            { value: 'tesserocr', label: 'Tesseract CLI' },
                             { value: 'tesseract', label: 'Tesseract' },
                             { value: 'rapidocr', label: 'RapidOCR' },
                             { value: 'ocrmac', 'label': 'OCRMac' }

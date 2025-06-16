@@ -5,7 +5,7 @@ export type conversionProfile = {
   alias: string;
   image_export_mode: "embedded" | "placeholder" | "referenced";
   pipeline: "standard" | "vlm";
-  ocr_engine: "easyocr" | "tesseract_cli" | "tesseract" | "rapidocr" | "ocrmac";
+  ocr_engine: "easyocr" | "tesserocr" | "tesseract" | "rapidocr" | "ocrmac";
   pdf_backend: "pypdfium2" | "dlparse_v1" | "dlparse_v2" | "dlparse_v4";
   table_mode: "fast" | "accurate";
   do_ocr: boolean;
@@ -40,7 +40,7 @@ export type conversionProfileDisplay = {
 export const getConversionProfileDisplay = (profile: conversionProfile): conversionProfileDisplay => {
   const ocrEngineTranslations: { [key: string]: string } = {
     easyocr: "EasyOCR",
-    tesseract_cli: "Tesseract CLI",
+    tesserocr: "Tesseract CLI",
     tesseract: "Tesseract",
     rapidocr: "RapidOCR",
     ocrmac: "OCRMac"

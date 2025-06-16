@@ -12,6 +12,7 @@ import { useState, useRef } from 'react';
 
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
+import Stage3 from './Stage3';
 import type { fullConversionPackage } from './Stage2';
 
 interface StageManagerProps {
@@ -40,9 +41,10 @@ const StageManager: React.FunctionComponent<StageManagerProps> = ({ workspaceFil
     if (stage === 2 && packages) {
       setConversionPackages(packages);
       alert(`${packages.length} files packaged with conversion settings sent for conversion.`);
-      if (setConversionActive) {
-        setConversionActive(false);
-      }
+    }
+
+    if (stage === 3) {
+      setConversionActive?.(false);
     }
 
     setStage(prev => prev + 1);
@@ -69,6 +71,11 @@ const StageManager: React.FunctionComponent<StageManagerProps> = ({ workspaceFil
         {stage == 2 && (
           <FlexItem style={{ width: '100%', maxWidth: '1800px' }}>
             <Stage2 toConvert={toConvert} nextStage={toStage3} previousStage={goBack}/>
+          </FlexItem>
+        )}
+        {stage == 3 && (
+          <FlexItem style={{ width: '100%', maxWidth: '1800px' }}>
+            <Stage3 nextStage={changeStage} toConvert={conversionPackages}/>
           </FlexItem>
         )}
       </Flex>
