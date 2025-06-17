@@ -22,7 +22,7 @@
   background-color: #3D73171a;
 }
 
-.pf-v6-c-table .fat-row Td {
+.pf-v6-c-table .fat-row Td, Th {
   height: 4.5rem;
   vertical-align: middle;
 }

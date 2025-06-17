@@ -61,6 +61,82 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     });
   const isGroupExpanded = (group: string) => expandedGroupNames.includes(group);
 
+  const [conversionRequiredFiles, setConversionRequiredFiles] = useState<File[]>([]);
+  const [uploadCompleteFiles, setUploadCompleteFiles] = useState<File[]>([]);
+
+  const [selectedConversionRequiredFileNames, setSelectedConversionRequiredFileNames] = useState<string[]>([]);
+  const [selectedUploadCompleteFileNames, setSelectedUploadCompleteFileNames] = useState<string[]>([]);
+
+  const setFileSelected = (file: File, isSelecting = true, group: string) => {
+    if (group === 'conversion-required') {
+      setSelectedConversionRequiredFileNames((prevSelected) => {
+        const otherSelectedFileNames = prevSelected.filter((file_name) => file_name !== file.name);
+        return isSelecting ? [...otherSelectedFileNames, file.name] : otherSelectedFileNames;
+      });
+    } else if (group === 'upload-complete') {
+      setSelectedUploadCompleteFileNames((prevSelected) => {
+        const otherSelectedFileNames = prevSelected.filter((file_name) => file_name !== file.name);
+        return isSelecting ? [...otherSelectedFileNames, file.name] : otherSelectedFileNames;
+      });
+    }
+  }
+
+  const selectAllFiles = (isSelecting = true, group: string) => {
+    if (group === 'conversion-required') {
+      setSelectedConversionRequiredFileNames(isSelecting ? conversionRequiredFiles.map((file) => file.name) : []);
+    } else if (group === 'upload-complete') {
+      setSelectedUploadCompleteFileNames(isSelecting ? uploadCompleteFiles.map((file) => file.name) : []);
+    }
+  }
+
+  const areAllConversionRequiredFilesSelected = selectedConversionRequiredFileNames.length === conversionRequiredFiles.length;
+  const areAllUploadCompleteFilesSelected = selectedUploadCompleteFileNames.length === uploadCompleteFiles.length;
+
+  const isFileSelected = (file: File) => [...selectedConversionRequiredFileNames, ...selectedUploadCompleteFileNames].includes(file.name);
+
+  const [recentSelectedRowIndex, setRecentSelectedRowIndex] = useState<number | null>(null);
+  const [shifting, setShifting] = useState(false);
+
+  const onSelectFile = (file: File, rowIndex: number, isSelecting: boolean) => {
+    if (shifting && recentSelectedRowIndex !== null) {
+      const numberSelected = rowIndex - recentSelectedRowIndex;
+      const intermediateIndexes =
+        numberSelected > 0
+          ? Array.from(new Array(numberSelected + 1), (_x, i) => i + recentSelectedRowIndex)
+          : Array.from(new Array(Math.abs(numberSelected) + 1), (_x, i) => i + rowIndex);
+      intermediateIndexes.forEach((index) => setFileSelected([...conversionRequiredFiles, ...uploadCompleteFiles][index], isSelecting, index < conversionRequiredFiles.length ? 'conversion-required' : 'upload-complete'));
+    } else {
+      setFileSelected(file, isSelecting, rowIndex < conversionRequiredFiles.length ? 'conversion-required' : 'upload-complete');
+    }
+    setRecentSelectedRowIndex(rowIndex);
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setShifting(true);
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setShifting(false);
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    setConversionRequiredFiles(uploadedFiles.filter((file) => file.type !== 'text/markdown'));
+    setUploadCompleteFiles(uploadedFiles.filter((file) => file.type === 'text/markdown'));
+  }, [uploadedFiles])
+
   return (
     <>
       <ConversionHeader setShowConversionProfiles={setShowConversionProfiles} setShowDocumentation={setShowDocumentation} />
@@ -110,16 +186,20 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
             </CardTitle>
             <CardBody>
               <Table>
-                <Tbody key='conversion-required'>
-                  <Tr className='conversion-required-header fat-row'>
-                    <Td expand={{
-                      rowIndex: 0,
-                      isExpanded: isGroupExpanded('conversion-required'),
+                <Thead className='conversion-required-header'>
+                  <Tr className='fat-row'>
+                    <Th expand={{
+                      areAllExpanded: !isGroupExpanded('conversion-required'),
+                      collapseAllAriaLabel: 'Collapse all',
                       onToggle: () => setGroupExpanded('conversion-required', !isGroupExpanded('conversion-required')),
-                      expandId: 'conversion-required',
-                    }}
+                    }} screenReaderText='Empty'
                     />
-                    <Td>
+                    <Th select={{
+                      onSelect: (_event, isSelecting) => selectAllFiles(isSelecting, 'conversion-required'),
+                      isSelected: areAllConversionRequiredFilesSelected && conversionRequiredFiles.length > 0
+                    }} screenReaderText='Empty'
+                    />
+                    <Th>
                       <Flex>
                         <FlexItem>
                           <Icon >
@@ -132,17 +212,25 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                           </Content>
                         </FlexItem>
                         <FlexItem>
-                          <Badge style={{ transform: 'translateY(-1px)' }} screenReaderText="Uploaded Resources">{uploadedFiles.filter((file) => file.type != 'text/markdown').length}</Badge>
+                          <Badge style={{ transform: 'translateY(-1px)' }} screenReaderText="Conversion Required">{uploadedFiles.filter((file) => file.type !== 'text/markdown').length}</Badge>
                         </FlexItem>
                       </Flex>
-                    </Td>
-                    <Td/>
-                    <Td/>
-                    <Td>{isGroupExpanded('conversion-required') && 'Select conversion profile'}</Td>
+                    </Th>
+                    <Th screenReaderText='Empty'/>
+                    <Th screenReaderText='Empty'/>
+                    <Th screenReaderText='Empty'/>
                   </Tr>
-                  {isGroupExpanded('conversion-required') && uploadedFiles.filter((file) => file.type != 'text/markdown').map((file, index) => (
+                </Thead>
+                <Tbody>
+                  {isGroupExpanded('conversion-required') && conversionRequiredFiles.map((file, index) => (
                     <Tr key={index} className='conversion-required-row fat-row'>
                       <Td/>
+                      <Td select={{
+                          rowIndex: index,
+                          isSelected: isFileSelected(file),
+                          onSelect: (_event, isSelecting) => onSelectFile(file, index, isSelecting),
+                        }}
+                      />
                       <Td>{file.name}</Td>
                       <Td>{file.type || 'Unknown'}</Td>
                       <Td>{(file.size / 1024).toFixed(2)} KB</Td>
@@ -152,16 +240,20 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                 </Tbody>
               </Table>
               <Table>
-                <Tbody key='upload-complete'>
-                  <Tr className='upload-complete-header fat-row'>
-                    <Td expand={{
-                      rowIndex: 0,
-                      isExpanded: isGroupExpanded('upload-complete'),
+                <Thead className='upload-complete-header'>
+                  <Tr className='fat-row'>
+                    <Th expand={{
+                      areAllExpanded: !isGroupExpanded('upload-complete'),
+                      collapseAllAriaLabel: 'Collapse all',
                       onToggle: () => setGroupExpanded('upload-complete', !isGroupExpanded('upload-complete')),
-                      expandId: 'upload-complete',
-                    }}
+                    }} screenReaderText='Empty'
                     />
-                    <Td>
+                    <Th select={{
+                      onSelect: (_event, isSelecting) => selectAllFiles(isSelecting, 'upload-complete'),
+                      isSelected: areAllUploadCompleteFilesSelected && uploadCompleteFiles.length > 0
+                    }} screenReaderText='Empty'
+                    />
+                    <Th>
                       <Flex>
                         <FlexItem>
                           <Icon >
@@ -174,17 +266,24 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                           </Content>
                         </FlexItem>
                         <FlexItem>
-                          <Badge style={{ transform: 'translateY(-1px)' }} screenReaderText="Uploaded Resources">{uploadedFiles.filter((file) => file.type == 'text/markdown').length}</Badge>
+                          <Badge style={{ transform: 'translateY(-1px)' }} screenReaderText="Uploaded complete">{uploadedFiles.filter((file) => file.type === 'text/markdown').length}</Badge>
                         </FlexItem>
                       </Flex>
-                    </Td>
-                    <Td/>
-                    <Td/>
-                    <Td/>
+                    </Th>
+                    <Th screenReaderText='Empty'/>
+                    <Th screenReaderText='Empty'/>
+                    <Th screenReaderText='Empty'/>
                   </Tr>
-                  {isGroupExpanded('upload-complete') && uploadedFiles.filter((file) => file.type == 'text/markdown').map((file, index) => (
+                </Thead>
+                <Tbody key='upload-complete'>
+                  {isGroupExpanded('upload-complete') && uploadCompleteFiles.map((file, index) => (
                     <Tr key={index} className="upload-complete-row fat-row">
                       <Td/>
+                      <Td select={{
+                        rowIndex: conversionRequiredFiles.length + index,
+                        isSelected: isFileSelected(file),
+                        onSelect: (_event, isSelecting) => onSelectFile(file, conversionRequiredFiles.length + index, isSelecting),
+                      }}/>
                       <Td>{file.name}</Td>
                       <Td>{file.type || 'Unknown'}</Td>
                       <Td>{(file.size / 1024).toFixed(2)} KB</Td>
