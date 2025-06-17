@@ -21,11 +21,11 @@ import UploadIcon from '@patternfly/react-icons/dist/esm/icons/upload-icon';
 
 interface FileUploadProps {
   workspaceFiles: File[];
-  uploadedFiles: File[];
-  setUploadedFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  pageFiles: File[];
+  setResources: (toOverwrite: File[], toUpload: File[]) => void;
 }
 
-const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, uploadedFiles, setUploadedFiles }) => {
+const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, pageFiles, setResources }) => {
   const [fromDrop, setFromDrop] = useState<File[]>([]);
 
   const [duplicateFiles, setDuplicateFiles] = useState<File[]>([]);
@@ -65,7 +65,7 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
   // callback that will be called by the react dropzone with the newly dropped file objects
   const handleFileDrop = (_event: DropEvent, droppedFiles: File[]) => {
     // identify files that have conflicting names
-    const duplicates = findDuplicateFiles([...workspaceFiles, ...uploadedFiles, ...droppedFiles]);
+    const duplicates = findDuplicateFiles([...workspaceFiles, ...pageFiles, ...droppedFiles]);
 
     if (duplicates.length) {
       setFromDrop(droppedFiles);
@@ -75,7 +75,7 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
     }
 
     // identify what, if any, files are re-uploads of already uploaded files
-    const currentFileNames = uploadedFiles.map((file) => file.name);
+    const currentFileNames = pageFiles.map((file) => file.name);
     const reUploads = droppedFiles.filter((droppedFile) => currentFileNames.includes(droppedFile.name));
     const newFiles = droppedFiles.filter((droppedFile) => !currentFileNames.includes(droppedFile.name));
 
@@ -98,15 +98,11 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
     setFromDrop([]);
     setShowDuplicatesModal(false);
 
-    /** this promise chain is needed because if the file removal is done at the same time as the file adding react
-     * won't realize that the status items for the re-uploaded files needs to be re-rendered */
-    Promise.resolve()
-      .then(() => removeFiles(toOverwrite))
-      .then(() => updateCurrentFiles([...toUpload, ...toOverwrite]));
+    setResources(toOverwrite, toUpload);
   };
 
   const addSuffixes = () => {
-    let allFiles = [...workspaceFiles, ...uploadedFiles];
+    let allFiles = [...workspaceFiles, ...pageFiles];
     let dropped = [...fromDrop];
 
     for (let i = 0; i < fromDrop.length; i++) {
@@ -137,17 +133,8 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
     setShowDuplicatesModal(false);
   }
 
-  // remove files from the state array based on their stems
-  const removeFiles = (filesToRemove: File[]) => {
-    const newCurrentFiles = uploadedFiles.filter(
-      (file) => !filesToRemove.some(fileToRemove => getFileStem(fileToRemove) === getFileStem(file))
-    );
-
-    setUploadedFiles(newCurrentFiles);
-  };
-
   const updateCurrentFiles = (files: File[]) => {
-    setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
+    setResources([], files);
   };
 
   const getDuplicateWarningText = () => {

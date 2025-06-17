@@ -26,3 +26,11 @@
   height: 4.5rem;
   vertical-align: middle;
 }
+
+.conversion-required-header .pf-v6-c-table__check input {
+  transform: translateY(-6px)
+}
+
+.upload-complete-header .pf-v6-c-table__check input {
+  transform: translateY(-6px)
+}
