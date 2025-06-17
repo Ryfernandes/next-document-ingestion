@@ -23,7 +23,7 @@ const IngestionManager: React.FunctionComponent<IngestionManagerProps> = ({  }) 
 
   return (
     <>
-      <Flex style={{ width: '100%', height: '100%', backgroundColor: '#ffffff', padding: '2rem', overflow: 'scroll', flexDirection: 'column', gap: '1rem' }}>
+      <Flex style={{ width: '100%', backgroundColor: '#ffffff', padding: '2rem', overflow: 'scroll', flexDirection: 'column', gap: '1rem' }}>
         { page == 1 && (
           <ConversionStep />
         )}

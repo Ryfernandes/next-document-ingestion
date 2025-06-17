@@ -1,0 +1,28 @@
+.pf-v6-c-table .conversion-required-row {
+  border-right: 1px solid #c7c7c7;
+  border-left: 4px solid #FFCC17;
+  border-bottom: none;
+  border-top: 1px solid #c7c7c7;
+}
+
+.pf-v6-c-table .conversion-required-header {
+  border: 1px solid #FFCC17;
+  border-left: 4px solid #FFCC17;
+  background-color: #ffcd171a;
+}
+
+.upload-complete-row {
+  border-right: 1px solid #c7c7c7;
+  border-left: 4px solid #3D7317;
+}
+
+.pf-v6-c-table .upload-complete-header {
+  border: 1px solid #3D7317;
+  border-left: 4px solid #3D7317;
+  background-color: #3D73171a;
+}
+
+.pf-v6-c-table .fat-row Td {
+  height: 4.5rem;
+  vertical-align: middle;
+}
