@@ -36,10 +36,12 @@ import {
   Td
 } from '@patternfly/react-table'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 
 import ConversionHeader from './ConversionHeader';
 import FileUpload from './FileUpload';
+
+import { conversionProfile, conversionProfileDisplay, equivalentConversionProfiles, creationDefault, defaultConversionProfiles, getConversionProfileDisplay } from '@/utils/conversionProfiles';
 
 import WarningIcon from '@patternfly/react-icons/dist/esm/icons/exclamation-triangle-icon';
 import CheckCircleIcon from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
@@ -51,6 +53,7 @@ import FileImage from '@patternfly/react-icons/dist/esm/icons/outlined-file-imag
 import FilePDF from '@patternfly/react-icons/dist/esm/icons/outlined-file-pdf-icon';
 import FilePowerpoint from '@patternfly/react-icons/dist/esm/icons/outlined-file-powerpoint-icon';
 import FileWord from '@patternfly/react-icons/dist/esm/icons/outlined-file-word-icon';
+import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 
 type Resource = {
   datetimeUploaded: Date;
@@ -64,6 +67,7 @@ type ConversionStepProps = {
 }
 
 // Later, add workspace file support
+// Figure out max dropdown menu height
 
 const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const [page, setPage] = useState(1);
@@ -158,6 +162,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   }
 
   const onUpload = (toOverwrite: File[], toUpload: File[]) => {
+    const conversionRequiredClosed = conversionRequiredResources.length == 0;
+    const uploadCompleteClosed = uploadCompleteResources.length == 0;
+
     const newConversionRequiredResources = conversionRequiredResources.filter(
       (resource) => !toOverwrite.some(fileToRemove => getFileStem(fileToRemove) === getFileStem(resource.file))
     );
@@ -166,32 +173,46 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
       (resource) => !toOverwrite.some(fileToRemove => getFileStem(fileToRemove) === getFileStem(resource.file))
     );
 
-    setConversionRequiredResources(() => {
-      const selectFiles = [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown')
-      const newResouces = selectFiles.map((file) => {
-        return ({
-          "datetimeUploaded": new Date(),
-          "originalFile": null,
-          "file": file,
-          "conversionProfile": "Default"
+    Promise.resolve().then(() => {
+      setConversionRequiredResources(() => {
+        const selectFiles = [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown')
+        const newResouces = selectFiles.map((file) => {
+          return ({
+            "datetimeUploaded": new Date(),
+            "originalFile": null,
+            "file": file,
+            "conversionProfile": "Default"
+          })
         })
+  
+        return [...newConversionRequiredResources, ...newResouces];
       })
-
-      return [...newConversionRequiredResources, ...newResouces];
-    })
-
-    setUploadCompleteResources(() => {
-      const selectFiles = [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown')
-      const newResouces = selectFiles.map((file) => {
-        return ({
-          "datetimeUploaded": new Date(),
-          "originalFile": null,
-          "file": file,
-          "conversionProfile": "None"
+    }).then(() => {
+      setUploadCompleteResources(() => {
+        const selectFiles = [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown')
+        const newResouces = selectFiles.map((file) => {
+          return ({
+            "datetimeUploaded": new Date(),
+            "originalFile": null,
+            "file": file,
+            "conversionProfile": "None"
+          })
         })
+  
+        return [...newUploadCompleteResources, ...newResouces];
       })
+    }).then(() => {
+      let closeGroup: string[] = []
 
-      return [...newUploadCompleteResources, ...newResouces];
+      if (!conversionRequiredClosed && newConversionRequiredResources.length === 0) {
+        closeGroup.push("conversion-required");
+      }
+
+      if (!uploadCompleteClosed && newUploadCompleteResources.length === 0) {
+        closeGroup.push("upload-complete");
+      }
+
+      setExpandedGroupNames((prev) => prev.filter((group) => !closeGroup.includes(group)));
     })
   }
 
@@ -256,7 +277,73 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     const formattedDate = formatter.format(date);
   
     return `Uploaded ${formattedDate} EST`;
-  }``
+  }
+
+  const [conversionProfiles, setConversionProfiles] = useState<conversionProfile[]>(defaultConversionProfiles);
+  const [openProfileDropdown, setOpenProfileDropdown] = useState<string | null>(null);
+
+  const onToggleClick = (name: string) => {
+    if (openProfileDropdown === name) {
+      setOpenProfileDropdown(null);
+    } else {
+      setOpenProfileDropdown(name);
+    }
+  }
+
+  const handleProfileSelect = (resource: Resource, profile: conversionProfile) => {
+    setConversionRequiredResources((prevResources) => {
+      return prevResources.map((res) => {
+        if (res.file.name === resource.file.name) {
+          return { ...res, conversionProfile: profile.alias };
+        }
+        return res;
+      });
+    });
+    setOpenProfileDropdown(null);
+  }
+
+  const [openFileActionsDropdown, setOpenFileActionsDropdown] = useState<string | null>(null);
+
+  const onActionsToggleClick = (name: string) => {
+    if (openFileActionsDropdown === name) {
+      setOpenFileActionsDropdown(null);
+    } else {
+      setOpenFileActionsDropdown(name);
+    }
+  }
+
+  const handleFileActionSelect = (resource: Resource, value: string) => {
+    if (value === "delete") {
+      removeResources([resource]);
+    }
+
+    setOpenFileActionsDropdown(null);
+  }
+
+  const removeResources = (resources: Resource[]) => {
+    const newConversionRequiredResources = conversionRequiredResources.filter(
+      (resource) => !resources.some(resourceToRemove => getFileStem(resourceToRemove.file) === getFileStem(resource.file))
+    );
+
+    const newUploadCompleteResources = uploadCompleteResources.filter(
+      (resource) => !resources.some(resourceToRemove => getFileStem(resourceToRemove.file) === getFileStem(resource.file))
+    );
+
+    let closeGroup: string[] = []
+
+    if (newConversionRequiredResources.length !== conversionRequiredResources.length && newConversionRequiredResources.length === 0) {
+      closeGroup.push("conversion-required");
+    }
+
+    if (newUploadCompleteResources.length !== uploadCompleteResources.length && newUploadCompleteResources.length === 0) {
+      closeGroup.push("upload-complete");
+    }
+
+    setExpandedGroupNames((prev) => prev.filter((group) => !closeGroup.includes(group)));
+
+    setConversionRequiredResources(newConversionRequiredResources);
+    setUploadCompleteResources(newUploadCompleteResources);
+  }
 
   return (
     <>
@@ -320,7 +407,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                       isSelected: areAllConversionRequiredResourcesSelected && conversionRequiredResources.length > 0
                     }} screenReaderText='Empty'
                     />
-                    <Th>
+                    <Th className='conversion-required-title'>
                       <Flex>
                         <FlexItem>
                           <Icon >
@@ -369,8 +456,82 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                         </Flex>
                       </Td>
                       <Td>{sizeForDisplay(resource.file.size)}</Td>
-                      <Td>Dropdown placeholder</Td>
-                      <Td>Menu placeholder</Td>
+                      <Td>
+                        <Dropdown
+                          isOpen={resource.file.name === openProfileDropdown}
+                          onSelect={() => {setOpenProfileDropdown(resource.file.name)}}
+                          onOpenChange={(isOpen: boolean) => {setOpenProfileDropdown(isOpen ? resource.file.name : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle className="conversion-profile-menu" ref={toggleRef} onClick={() => onToggleClick(resource.file.name)} isExpanded={resource.file.name === openProfileDropdown}>
+                              {resource.conversionProfile}
+                            </MenuToggle>
+                          )}
+                          ouiaId="ConversionProfileDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            {conversionProfiles.map((profile, idx) => (
+                              <DropdownItem
+                                value={idx}
+                                key={idx}
+                                onClick={() => handleProfileSelect(resource, profile)}
+                                isSelected={resource.conversionProfile === profile.alias}
+                              >
+                                {profile.alias}
+                              </DropdownItem>
+                            ))}
+                            <Divider component="li" key="separator" />
+                            <DropdownItem
+                                value={conversionProfiles.length}
+                                key="create"
+                                onClick={() => {}}
+                              >
+                                Create conversion profile
+                              </DropdownItem>
+                          </DropdownList>
+                        </Dropdown>
+                      </Td>
+                      <Td>
+                        <Dropdown
+                          popperProps={{ position: 'right' }}
+                          isOpen={resource.file.name === openFileActionsDropdown}
+                          onSelect={() => {setOpenFileActionsDropdown(resource.file.name)}}
+                          onOpenChange={(isOpen: boolean) => {setOpenFileActionsDropdown(isOpen ? resource.file.name : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle icon={<EllipsisVIcon />} variant="plain" ref={toggleRef} onClick={() => {onActionsToggleClick(resource.file.name)}} isExpanded={resource.file.name === openFileActionsDropdown}/>
+                          )}
+                          ouiaId="FileActionsDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            <DropdownItem
+                              value={0}
+                              key="view"
+                              onClick={() => {handleFileActionSelect(resource, "view")}}
+                              isSelected={false}
+                            >
+                              View file
+                            </DropdownItem>
+                            <DropdownItem
+                              value={1}
+                              key="convert"
+                              onClick={() => {handleFileActionSelect(resource, "convert")}}
+                              isSelected={false}
+                            >
+                              Convert file
+                            </DropdownItem>
+                            <Divider component="li" key="separator" />
+                            <DropdownItem
+                                value={3}
+                                key="delete"
+                                onClick={() => {handleFileActionSelect(resource, "delete")}}
+                                className="danger-item"
+                              >
+                                Delete file
+                              </DropdownItem>
+                          </DropdownList>
+                        </Dropdown>
+                      </Td>
                     </Tr>
                   ))}
                 </Tbody>
@@ -389,7 +550,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                       isSelected: areAllUploadCompleteResourcesSelected && uploadCompleteResources.length > 0
                     }} screenReaderText='Empty'
                     />
-                    <Th>
+                    <Th className="upload-complete-title">
                       <Flex>
                         <FlexItem>
                           <Icon >
@@ -438,7 +599,47 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                       </Td>
                       <Td>{sizeForDisplay(resource.file.size)}</Td>
                       <Td>{formatDate(resource.datetimeUploaded)}</Td>
-                      <Td>Menu placeholder</Td>
+                      <Td>
+                        <Dropdown
+                          popperProps={{ position: 'right' }}
+                          isOpen={resource.file.name === openFileActionsDropdown}
+                          onSelect={() => {setOpenFileActionsDropdown(resource.file.name)}}
+                          onOpenChange={(isOpen: boolean) => {setOpenFileActionsDropdown(isOpen ? resource.file.name : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle icon={<EllipsisVIcon />} variant="plain" ref={toggleRef} onClick={() => {onActionsToggleClick(resource.file.name)}} isExpanded={resource.file.name === openFileActionsDropdown}/>
+                          )}
+                          ouiaId="FileActionsDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            <DropdownItem
+                              value={0}
+                              key="view"
+                              onClick={() => {handleFileActionSelect(resource, "view")}}
+                              isSelected={false}
+                            >
+                              View file
+                            </DropdownItem>
+                            <DropdownItem
+                              value={1}
+                              key="convert"
+                              onClick={() => {handleFileActionSelect(resource, "convert")}}
+                              isSelected={false}
+                            >
+                              Convert file
+                            </DropdownItem>
+                            <Divider component="li" key="separator" />
+                            <DropdownItem
+                                value={3}
+                                key="delete"
+                                onClick={() => {handleFileActionSelect(resource, "delete")}}
+                                className="danger-item"
+                              >
+                                Delete file
+                              </DropdownItem>
+                          </DropdownList>
+                        </Dropdown>
+                      </Td>
                     </Tr>
                   ))}
                 </Tbody>

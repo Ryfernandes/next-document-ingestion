@@ -34,3 +34,19 @@
 .upload-complete-header .pf-v6-c-table__check input {
   transform: translateY(-6px)
 }
+
+.conversion-profile-menu {
+  width: 500px;
+}
+
+.pf-v6-c-menu__item.danger-item {
+  color: #B1380B;
+}
+
+.pf-v6-c-table .conversion-required-title {
+  min-width: 265px;
+}
+
+.pf-v6-c-table .upload-complete-title {
+  min-width: 265px;
+}
