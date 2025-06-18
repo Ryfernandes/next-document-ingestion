@@ -34,7 +34,9 @@ import {
   MenuContent,
   MenuList,
   MenuItem,
-  TextInput
+  TextInput,
+  Checkbox,
+  TextArea
 } from '@patternfly/react-core';
 
 import {
@@ -830,7 +832,8 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
               </Menu>
             </FlexItem>
             <FlexItem flex={{ default: 'flex_1' }} className='settings-view-container' ref={settingsViewContainerRef}>
-              <Flex>
+              <Content style={{ fontSize: '0.8rem'}} component="p">Want to learn more about these options? Click <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">here</Content> </Content>
+              <Flex columnGap={{ default: 'columnGap2xl' }}>
                 <FlexItem flex={{ default: 'flex_1' }}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
@@ -843,6 +846,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                           type="text"
                           onChange={(_event, value) => {handleViewedProfileChange(value, "alias")}}
                           isDisabled={!viewedProfile.editable}
+                          placeholder='Enter alias...'
                         />
                     </FlexItem>
                     {viewedProfile.editable && (
@@ -882,38 +886,6 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                                   key={option.value}
                                   onClick={() => {handleViewedProfileChange(option.value, "image_export_mode")}}
                                   isSelected={viewedProfile.image_export_mode === option.value}
-                                >
-                                  {option.display}
-                                </DropdownItem>
-                              )
-                            })}
-                          </DropdownList>
-                        </Dropdown>
-                    </FlexItem>
-                    <FlexItem>
-                      <Content component="p" className="new-option">Pipeline Type:</Content>
-                    </FlexItem>
-                    <FlexItem>
-                      <Dropdown
-                          isOpen={openEditConversionProfileDropdown === "pipeline"}
-                          onSelect={() => {setOpenEditConversionProfileDropdown("pipeline")}}
-                          onOpenChange={(isOpen: boolean) => {setOpenEditConversionProfileDropdown(isOpen ? "pipeline" : null)}}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle className="manage-conversion-profiles-dropdown" isDisabled={!viewedProfile.editable} ref={toggleRef} onClick={() => {setOpenEditConversionProfileDropdown(openEditConversionProfileDropdown === "pipeline" ? null : "pipeline")}} isExpanded={openEditConversionProfileDropdown === "pipeline"}>
-                              {viewedProfileDisplay.pipeline}
-                            </MenuToggle>
-                          )}
-                          ouiaId="PipelineDropdown"
-                          shouldFocusToggleOnSelect
-                        >
-                          <DropdownList>
-                            {pipelineOptions.map((option, idx) => {
-                              return (
-                                <DropdownItem
-                                  value={idx}
-                                  key={option.value}
-                                  onClick={() => {handleViewedProfileChange(option.value, "pipeline")}}
-                                  isSelected={viewedProfile.pipeline === option.value}
                                 >
                                   {option.display}
                                 </DropdownItem>
@@ -1023,10 +995,134 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                 <FlexItem flex={{ default: 'flex_1' }}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Content style={{ fontSize: '0.8rem'}} component="p">Want to learn more about these options? Click <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">here</Content> </Content>
+                      <Content component="p" className="new-option">Pipeline Type:</Content>
+                    </FlexItem>
+                    <FlexItem>
+                      <Dropdown
+                        isOpen={openEditConversionProfileDropdown === "pipeline"}
+                        onSelect={() => {setOpenEditConversionProfileDropdown("pipeline")}}
+                        onOpenChange={(isOpen: boolean) => {setOpenEditConversionProfileDropdown(isOpen ? "pipeline" : null)}}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle className="manage-conversion-profiles-dropdown" isDisabled={!viewedProfile.editable} ref={toggleRef} onClick={() => {setOpenEditConversionProfileDropdown(openEditConversionProfileDropdown === "pipeline" ? null : "pipeline")}} isExpanded={openEditConversionProfileDropdown === "pipeline"}>
+                            {viewedProfileDisplay.pipeline}
+                          </MenuToggle>
+                        )}
+                        ouiaId="PipelineDropdown"
+                        shouldFocusToggleOnSelect
+                      >
+                        <DropdownList>
+                          {pipelineOptions.map((option, idx) => {
+                            return (
+                              <DropdownItem
+                                value={idx}
+                                key={option.value}
+                                onClick={() => {handleViewedProfileChange(option.value, "pipeline")}}
+                                isSelected={viewedProfile.pipeline === option.value}
+                              >
+                                {option.display}
+                              </DropdownItem>
+                            )
+                          })}
+                        </DropdownList>
+                      </Dropdown>
+                    </FlexItem>
+                    <FlexItem style={{ marginTop: '1.5rem'}}>
+                      <Flex direction={{ default: 'column' }} style={{ justifyItems: 'center'}}>
+                        <FlexItem>
+                          <Checkbox
+                            label="Allow optical character recognition (OCR)"
+                            isChecked={viewedProfile.do_ocr}
+                            onChange={(_event, checked) => {handleViewedProfileChange(checked, "do_ocr")}}
+                            id="do-ocr-checkbox"
+                            isDisabled={!viewedProfile.editable}
+                          />
+                        </FlexItem>
+                        <FlexItem>
+                          <Checkbox
+                            label="Force optical character recognition (OCR)"
+                            isChecked={viewedProfile.force_ocr}
+                            onChange={(_event, checked) => {handleViewedProfileChange(checked, "force_ocr")}}
+                            id="force-ocr-checkbox"
+                            isDisabled={!viewedProfile.editable}
+                          />
+                        </FlexItem>
+                        <FlexItem>
+                          <Checkbox
+                            label="Code enrichment"
+                            isChecked={viewedProfile.do_code_enrichment}
+                            onChange={(_event, checked) => {handleViewedProfileChange(checked, "do_code_enrichment")}}
+                            id="do-code-enrichment-checkbox"
+                            isDisabled={!viewedProfile.editable}
+                          />
+                        </FlexItem>
+                        <FlexItem>
+                          <Checkbox
+                            label="Formula enrichment"
+                            isChecked={viewedProfile.do_formula_enrichment}
+                            onChange={(_event, checked) => {handleViewedProfileChange(checked, "do_formula_enrichment")}}
+                            id="do-formula-enrichment-checkbox"
+                            isDisabled={!viewedProfile.editable}
+                          />
+                        </FlexItem>
+                        <FlexItem>
+                          <Checkbox
+                            label="Picture classification"
+                            isChecked={viewedProfile.do_picture_classification}
+                            onChange={(_event, checked) => {handleViewedProfileChange(checked, "do_picture_classification")}}
+                            id="do-picture-classification-checkbox"
+                            isDisabled={!viewedProfile.editable}
+                          />
+                        </FlexItem>
+                        <FlexItem>
+                          <Checkbox
+                            label="Picture description"
+                            isChecked={viewedProfile.do_picture_description}
+                            onChange={(_event, checked) => {handleViewedProfileChange(checked, "do_picture_description")}}
+                            id="do-picture-description-checkbox"
+                            isDisabled={!viewedProfile.editable}
+                          />
+                        </FlexItem>
+                        <FlexItem>
+                          <Checkbox
+                            label="Do tables"
+                            isChecked={viewedProfile.do_table_structure}
+                            onChange={(_event, checked) => {handleViewedProfileChange(checked, "do_table_structure")}}
+                            id="do-table-structure-checkbox"
+                            isDisabled={!viewedProfile.editable}
+                          />
+                        </FlexItem>
+                      </Flex>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
+              </Flex>
+              <Flex direction={{ default: 'column' }} style={{ marginTop: '1rem' }}>
+                <FlexItem>
+                  <Content component="p" className="new-option">Page Break Placeholder:</Content>
+                </FlexItem>
+                <FlexItem>
+                  <TextArea
+                    value={viewedProfile.md_page_break_placeholder}
+                    onChange={(_event, value) => {handleViewedProfileChange(value, "md_page_break_placeholder")}}
+                    resizeOrientation="none"
+                    aria-label="placeholder-text-area"
+                    placeholder="None"
+                    isDisabled={!viewedProfile.editable}
+                  />
+                </FlexItem>
+                {viewedProfile.editable && (
+                  <FlexItem>
+                    {placeholderErrors.length > 0 ? (
+                      <Content style={{ fontSize: '0.7rem', color: '#B1380B'}} component="p">
+                        {placeholderErrors[0]}
+                      </Content>
+                    ) : (
+                      <Content style={{ fontSize: '0.7rem' }} component="p">
+                        {viewedProfile.md_page_break_placeholder.length}/{maxPlaceholderCharacters} characters
+                      </Content>
+                    )}
+                  </FlexItem>
+                )}
               </Flex>
             </FlexItem>
           </Flex>
