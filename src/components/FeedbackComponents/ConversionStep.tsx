@@ -3,6 +3,7 @@
 'use client';
 
 import './TableStyling.css';
+import './ModalStyling.css';
 
 import {
   Flex,
@@ -24,7 +25,16 @@ import {
   Dropdown,
   DropdownItem,
   DropdownList,
-  Divider
+  Divider,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Menu,
+  MenuContent,
+  MenuList,
+  MenuItem,
+  TextInput
 } from '@patternfly/react-core';
 
 import {
@@ -36,7 +46,7 @@ import {
   Td
 } from '@patternfly/react-table'
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import ConversionHeader from './ConversionHeader';
 import FileUpload from './FileUpload';
@@ -345,9 +355,144 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     setUploadCompleteResources(newUploadCompleteResources);
   }
 
+  // ------ MODAL THINGS -------
+
+  const handleConversionProfilesClose = () => {
+    setShowConversionProfiles(false);
+  }
+
+  const handleConversionProfilesOpen = (create: boolean = false) => {
+    setShowConversionProfiles(true);
+    setOpenProfileDropdown(null);
+
+    if (create) {
+      setViewedProfile(creationDefault);
+      setInitialViewedAlias(null);
+      
+    } else {
+      setViewedProfile(conversionProfiles[0]);
+      setInitialViewedAlias(conversionProfiles[0].alias);
+    }
+  }
+
+  const [viewedProfile, setViewedProfile] = useState<conversionProfile>(conversionProfiles[0]);
+  const [viewedProfileDisplay, setViewedProfileDisplay] = useState<conversionProfileDisplay>(getConversionProfileDisplay(conversionProfiles[0]));
+  const [initialViewedAlias, setInitialViewedAlias] = useState<string | null>(null);
+  const [aliasErrors, setAliasErrors] = useState<string[]>([]);
+  const [placeholderErrors, setPlaceholderErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    setViewedProfileDisplay(getConversionProfileDisplay(viewedProfile));
+  }, [viewedProfile]);
+
+  const maxAliasCharacters = 30;
+  const maxPlaceholderCharacters = 200;
+
+  const onProfileSelect = (_event: any, itemId: any) => {
+    settingsViewContainerRef.current?.scrollTo({ top: 0 });
+    setAliasErrors([]);
+    setPlaceholderErrors([]);
+
+    const profile = conversionProfiles.find((profile) => profile.alias === itemId);
+    
+    if (profile) {
+      setViewedProfile(profile);
+      setInitialViewedAlias(profile.alias);
+    }
+    if (itemId === 'create') {
+      setViewedProfile(creationDefault);
+      setInitialViewedAlias(null);
+    }
+  }
+
+  const getErrors = (value: string | boolean, accessor: keyof conversionProfile): boolean => {
+    if (accessor === "alias") {
+      const newAlias = value as string;
+      let errors: string[] = [];
+
+      if (newAlias.trim() === "") {
+        errors.push("Please enter an alias");
+      }
+
+      if (conversionProfiles.map(profile => profile.alias).includes(newAlias) && newAlias !== initialViewedAlias) {
+        errors.push(`The alias "${newAlias}" is already in use`);
+      }
+
+      if (newAlias.length > maxAliasCharacters) {
+        errors.push(`${newAlias.length}/${maxAliasCharacters} characters`)
+      }
+
+      setAliasErrors(errors);
+
+      return errors.length > 0;
+    } else if (accessor === "md_page_break_placeholder") {
+      const newPlaceholder = value as string;
+      let errors: string[] = [];
+
+      if (newPlaceholder.length > maxPlaceholderCharacters) {
+        errors.push(`${newPlaceholder.length}/${maxPlaceholderCharacters} characters`)
+      }
+
+      setPlaceholderErrors(errors);
+      
+      return errors.length > 0;
+    } 
+
+    return false;
+  }
+
+  const handleViewedProfileChange = (value: string | boolean, accessor: keyof conversionProfile) => {
+    setOpenEditConversionProfileDropdown(null);
+    
+    if (accessor === "alias") {
+      const newAlias = value as string;
+
+      getErrors(newAlias, accessor);
+      setViewedProfile(prev => ({ ...prev, [accessor]: newAlias }));
+    } else if (accessor === "md_page_break_placeholder") {
+      const newPlaceholder = value as string;
+      
+      getErrors(newPlaceholder, accessor);
+      setViewedProfile(prev => ({ ...prev, [accessor]: newPlaceholder }));
+    } else {
+      setViewedProfile(prev => ({ ...prev, [accessor]: value }));
+    }
+  }
+
+  const settingsViewContainerRef =  useRef<HTMLDivElement | null>(null);
+
+  const [openEditConversionProfileDropdown, setOpenEditConversionProfileDropdown] = useState<string | null>(null);
+
+  const imageExportModeOptions = [
+    {"value": "embedded", "display": "Embedded"},
+    {"value": "placeholder", "display": "Placeholder"},
+    {"value": "referenced", "display": "Referenced"}
+  ];
+  const pipelineOptions = [
+    {"value": "standard", "display": "Standard"},
+    {"value": "vlm", "display": "VLM"}
+  ]
+  const ocrEngineOptions = [
+    {"value": "easyocr", "display": "EasyOCR"},
+    {"value": "tesserocr", "display": "Tesseract CLI"},
+    {"value": "tesseract", "display": "Tesseract"},
+    {"value": "rapidocr", "display": "RapidOCR"},
+    {"value": "ocrmac", "display": "OCRMac"}
+  ]
+  const pdfBackendOptions = [
+    {"value": "pypdfium2", "display": "pypdfium2"},
+    {"value": "dlparse_v1", "display": "dlparse_v1"},
+    {"value": "dlparse_v2", "display": "dlparse_v2"},
+    {"value": "dlparse_v4", "display": "dlparse_v4"}
+  ]
+  const tableModeOptions = [
+    {"value": "fast", "display": "Fast"},
+    {"value": "accurate", "display": "Accurate"}
+  ]
+
   return (
     <>
-      <ConversionHeader setShowConversionProfiles={setShowConversionProfiles} setShowDocumentation={setShowDocumentation} />
+      <ConversionHeader openConversionProfiles={handleConversionProfilesOpen} setShowDocumentation={setShowDocumentation} />
       <Flex style={{ marginTop: '4rem', width: '100%' }}>
         <FlexItem style={{width: '20rem'}} alignSelf={{ default: 'alignSelfFlexStart'}}>
           <FileUpload
@@ -456,7 +601,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                         </Flex>
                       </Td>
                       <Td>{sizeForDisplay(resource.file.size)}</Td>
-                      <Td>
+                      <Td className='conversion-profile-menu-container'>
                         <Dropdown
                           isOpen={resource.file.name === openProfileDropdown}
                           onSelect={() => {setOpenProfileDropdown(resource.file.name)}}
@@ -484,14 +629,14 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                             <DropdownItem
                                 value={conversionProfiles.length}
                                 key="create"
-                                onClick={() => {}}
+                                onClick={() => handleConversionProfilesOpen(true)}
                               >
                                 Create conversion profile
                               </DropdownItem>
                           </DropdownList>
                         </Dropdown>
                       </Td>
-                      <Td>
+                      <Td className='row-end-menu-container'>
                         <Dropdown
                           popperProps={{ position: 'right' }}
                           isOpen={resource.file.name === openFileActionsDropdown}
@@ -599,7 +744,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                       </Td>
                       <Td>{sizeForDisplay(resource.file.size)}</Td>
                       <Td>{formatDate(resource.datetimeUploaded)}</Td>
-                      <Td>
+                      <Td className='row-end-menu-container'>
                         <Dropdown
                           popperProps={{ position: 'right' }}
                           isOpen={resource.file.name === openFileActionsDropdown}
@@ -648,6 +793,245 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
           </Card>
         </FlexItem>
       </Flex>
+
+      <Modal
+        isOpen={showConversionProfiles}
+        onClose={handleConversionProfilesClose}
+        disableFocusTrap
+        aria-label="manage conversion profiles"
+        aria-labelledby="manage-conversion-profiles-title"
+        aria-describedby="manage-conversion-profiles-variant"
+        style={{ maxWidth: "min(1600px, 97.5%)" }}
+      >
+        <ModalHeader
+          title="Manage conversion profiles"
+          labelId="manage-conversion-profiles-title"
+        />
+        <ModalBody id="manage-conversion-profiles-variant">
+          <Content component="p">
+            Select profiles in the left menu to view and edit their settings. Create new profiles to add a new group of settings
+          </Content>
+          <Flex style={{ marginTop: '2rem' }} columnGap={{ default: 'columnGapLg' }}>
+            <FlexItem>
+              <Menu className="inset-menu" activeItemId={viewedProfile.alias} onSelect={onProfileSelect} isScrollable>
+                <MenuContent maxMenuHeight="300px">
+                  <MenuList>
+                    {conversionProfiles.map((profile, index) => (
+                      <MenuItem key={index} itemId={profile.alias} isFocused={profile.alias === initialViewedAlias}>
+                        {profile.alias}
+                      </MenuItem>
+                    ))}
+                    <Divider component="li" key="separator" />
+                    <MenuItem key="create" itemId="create" isFocused={initialViewedAlias === null}>
+                      + Create conversion profile
+                    </MenuItem>
+                  </MenuList>
+                </MenuContent>
+              </Menu>
+            </FlexItem>
+            <FlexItem flex={{ default: 'flex_1' }} className='settings-view-container' ref={settingsViewContainerRef}>
+              <Flex>
+                <FlexItem flex={{ default: 'flex_1' }}>
+                  <Flex direction={{ default: 'column' }}>
+                    <FlexItem>
+                      <Content component="p">Alias:</Content>
+                    </FlexItem>
+                    <FlexItem>
+                      <TextInput
+                          aria-label='alias-input'
+                          value={viewedProfile.alias}
+                          type="text"
+                          onChange={(_event, value) => {handleViewedProfileChange(value, "alias")}}
+                          isDisabled={!viewedProfile.editable}
+                        />
+                    </FlexItem>
+                    {viewedProfile.editable && (
+                      <FlexItem>
+                        {aliasErrors.length > 0 ? (
+                          <Content style={{ fontSize: '0.7rem', color: '#B1380B'}} component="p">
+                            {aliasErrors[0]}
+                          </Content>
+                        ) : (
+                          <Content style={{ fontSize: '0.7rem' }} component="p">
+                            {viewedProfile.alias.length}/{maxAliasCharacters} characters
+                          </Content>
+                        )}
+                      </FlexItem>
+                    )}
+                    <FlexItem>
+                      <Content component="p" className="new-option">Image Export Mode:</Content>
+                    </FlexItem>
+                    <FlexItem>
+                      <Dropdown
+                          isOpen={openEditConversionProfileDropdown === "image_export_mode"}
+                          onSelect={() => {setOpenEditConversionProfileDropdown("image_export_mode")}}
+                          onOpenChange={(isOpen: boolean) => {setOpenEditConversionProfileDropdown(isOpen ? "image_export_mode" : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle className="manage-conversion-profiles-dropdown" isDisabled={!viewedProfile.editable} ref={toggleRef} onClick={() => {setOpenEditConversionProfileDropdown(openEditConversionProfileDropdown === "image_export_mode" ? null : "image_export_mode")}} isExpanded={openEditConversionProfileDropdown === "image_export_mode"}>
+                              {viewedProfileDisplay.image_export_mode}
+                            </MenuToggle>
+                          )}
+                          ouiaId="ImageExportModeDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            {imageExportModeOptions.map((option, idx) => {
+                              return (
+                                <DropdownItem
+                                  value={idx}
+                                  key={option.value}
+                                  onClick={() => {handleViewedProfileChange(option.value, "image_export_mode")}}
+                                  isSelected={viewedProfile.image_export_mode === option.value}
+                                >
+                                  {option.display}
+                                </DropdownItem>
+                              )
+                            })}
+                          </DropdownList>
+                        </Dropdown>
+                    </FlexItem>
+                    <FlexItem>
+                      <Content component="p" className="new-option">Pipeline Type:</Content>
+                    </FlexItem>
+                    <FlexItem>
+                      <Dropdown
+                          isOpen={openEditConversionProfileDropdown === "pipeline"}
+                          onSelect={() => {setOpenEditConversionProfileDropdown("pipeline")}}
+                          onOpenChange={(isOpen: boolean) => {setOpenEditConversionProfileDropdown(isOpen ? "pipeline" : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle className="manage-conversion-profiles-dropdown" isDisabled={!viewedProfile.editable} ref={toggleRef} onClick={() => {setOpenEditConversionProfileDropdown(openEditConversionProfileDropdown === "pipeline" ? null : "pipeline")}} isExpanded={openEditConversionProfileDropdown === "pipeline"}>
+                              {viewedProfileDisplay.pipeline}
+                            </MenuToggle>
+                          )}
+                          ouiaId="PipelineDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            {pipelineOptions.map((option, idx) => {
+                              return (
+                                <DropdownItem
+                                  value={idx}
+                                  key={option.value}
+                                  onClick={() => {handleViewedProfileChange(option.value, "pipeline")}}
+                                  isSelected={viewedProfile.pipeline === option.value}
+                                >
+                                  {option.display}
+                                </DropdownItem>
+                              )
+                            })}
+                          </DropdownList>
+                        </Dropdown>
+                    </FlexItem>
+                    <FlexItem>
+                      <Content component="p" className="new-option">OCR Engine:</Content>
+                    </FlexItem>
+                    <FlexItem>
+                      <Dropdown
+                          isOpen={openEditConversionProfileDropdown === "ocr_engine"}
+                          onSelect={() => {setOpenEditConversionProfileDropdown("ocr_engine")}}
+                          onOpenChange={(isOpen: boolean) => {setOpenEditConversionProfileDropdown(isOpen ? "ocr_engine" : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle className="manage-conversion-profiles-dropdown" isDisabled={!viewedProfile.editable} ref={toggleRef} onClick={() => {setOpenEditConversionProfileDropdown(openEditConversionProfileDropdown === "ocr_engine" ? null : "ocr_engine")}} isExpanded={openEditConversionProfileDropdown === "ocr_engine"}>
+                              {viewedProfileDisplay.ocr_engine}
+                            </MenuToggle>
+                          )}
+                          ouiaId="OCREngineDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            {ocrEngineOptions.map((option, idx) => {
+                              return (
+                                <DropdownItem
+                                  value={idx}
+                                  key={option.value}
+                                  onClick={() => {handleViewedProfileChange(option.value, "ocr_engine")}}
+                                  isSelected={viewedProfile.ocr_engine === option.value}
+                                >
+                                  {option.display}
+                                </DropdownItem>
+                              )
+                            })}
+                          </DropdownList>
+                        </Dropdown>
+                    </FlexItem>
+                    <FlexItem>
+                      <Content component="p" className="new-option">PDF Backend:</Content>
+                    </FlexItem>
+                    <FlexItem>
+                      <Dropdown
+                          isOpen={openEditConversionProfileDropdown === "pdf_backend"}
+                          onSelect={() => {setOpenEditConversionProfileDropdown("pdf_backend")}}
+                          onOpenChange={(isOpen: boolean) => {setOpenEditConversionProfileDropdown(isOpen ? "pdf_backend" : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle className="manage-conversion-profiles-dropdown" isDisabled={!viewedProfile.editable} ref={toggleRef} onClick={() => {setOpenEditConversionProfileDropdown(openEditConversionProfileDropdown === "pdf_backend" ? null : "pdf_backend")}} isExpanded={openEditConversionProfileDropdown === "pdf_backend"}>
+                              {viewedProfileDisplay.pdf_backend}
+                            </MenuToggle>
+                          )}
+                          ouiaId="PDFBackendDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            {pdfBackendOptions.map((option, idx) => {
+                              return (
+                                <DropdownItem
+                                  value={idx}
+                                  key={option.value}
+                                  onClick={() => {handleViewedProfileChange(option.value, "pdf_backend")}}
+                                  isSelected={viewedProfile.pdf_backend === option.value}
+                                >
+                                  {option.display}
+                                </DropdownItem>
+                              )
+                            })}
+                          </DropdownList>
+                        </Dropdown>
+                    </FlexItem>
+                    <FlexItem>
+                      <Content component="p" className="new-option">Table Mode:</Content>
+                    </FlexItem>
+                    <FlexItem>
+                      <Dropdown
+                          isOpen={openEditConversionProfileDropdown === "table_mode"}
+                          onSelect={() => {setOpenEditConversionProfileDropdown("table_mode")}}
+                          onOpenChange={(isOpen: boolean) => {setOpenEditConversionProfileDropdown(isOpen ? "table_mode" : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle className="manage-conversion-profiles-dropdown" isDisabled={!viewedProfile.editable} ref={toggleRef} onClick={() => {setOpenEditConversionProfileDropdown(openEditConversionProfileDropdown === "table_mode" ? null : "table_mode")}} isExpanded={openEditConversionProfileDropdown === "table_mode"}>
+                              {viewedProfileDisplay.table_mode}
+                            </MenuToggle>
+                          )}
+                          ouiaId="TableModeDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            {tableModeOptions.map((option, idx) => {
+                              return (
+                                <DropdownItem
+                                  value={idx}
+                                  key={option.value}
+                                  onClick={() => {handleViewedProfileChange(option.value, "table_mode")}}
+                                  isSelected={viewedProfile.table_mode === option.value}
+                                >
+                                  {option.display}
+                                </DropdownItem>
+                              )
+                            })}
+                          </DropdownList>
+                        </Dropdown>
+                    </FlexItem>
+                  </Flex>
+                </FlexItem>
+                <FlexItem flex={{ default: 'flex_1' }}>
+                  <Flex direction={{ default: 'column' }}>
+                    <FlexItem>
+                      <Content style={{ fontSize: '0.8rem'}} component="p">Want to learn more about these options? Click <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">here</Content> </Content>
+                    </FlexItem>
+                  </Flex>
+                </FlexItem>
+              </Flex>
+            </FlexItem>
+          </Flex>
+        </ModalBody>
+      </Modal>
     </>
   );
 }

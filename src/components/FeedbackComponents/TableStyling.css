@@ -35,8 +35,12 @@
   transform: translateY(-6px)
 }
 
-.conversion-profile-menu {
-  width: 500px;
+.pf-v6-c-table .conversion-profile-menu {
+  width: 95%;
+}
+
+.pf-v6-c-table .conversion-profile-menu-container {
+  min-width: 225px;
 }
 
 .pf-v6-c-menu__item.danger-item {
@@ -49,4 +53,8 @@
 
 .pf-v6-c-table .upload-complete-title {
   min-width: 265px;
+}
+
+.pf-v6-c-table .row-end-menu-container {
+  width: 80px;
 }

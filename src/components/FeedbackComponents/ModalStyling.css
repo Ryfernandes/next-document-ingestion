@@ -1,0 +1,23 @@
+.pf-v6-c-menu.inset-menu {
+  box-shadow: none;
+  border: 1px solid #c7c7c7;
+  width: 300px;
+}
+
+.settings-view-container {
+  align-self: start;
+  padding: 1rem 2rem 1rem 2rem;
+  border: 1px solid #c7c7c7;
+  border-radius: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.pf-v6-c-menu-toggle.manage-conversion-profiles-dropdown {
+  width: 100%;
+  transition: none;
+}
+
+.new-option {
+  margin-top: 0.5rem;
+}

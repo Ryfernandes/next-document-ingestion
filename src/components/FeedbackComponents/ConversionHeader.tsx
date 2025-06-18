@@ -16,13 +16,13 @@ import OpenDrawerRightIcon from '@patternfly/react-icons/dist/esm/icons/open-dra
 import React from 'react';
 
 type ConversionHeaderProps = {
-  setShowConversionProfiles: React.Dispatch<React.SetStateAction<boolean>>;
+  openConversionProfiles: () => void;
   setShowDocumentation: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const ConversionHeader: React.FunctionComponent<ConversionHeaderProps> = ({ setShowConversionProfiles, setShowDocumentation }) => {
-  const toggleConversionProfiles = () => {
-    setShowConversionProfiles(prev => !prev);
+const ConversionHeader: React.FunctionComponent<ConversionHeaderProps> = ({ openConversionProfiles, setShowDocumentation }) => {
+  const handleConversionProfilesClick = () => {
+    openConversionProfiles();
   }
 
   const toggleDocumentation = () => {
@@ -50,7 +50,7 @@ const ConversionHeader: React.FunctionComponent<ConversionHeaderProps> = ({ setS
               Docling
             </Content> 
           {" "}locally to convert before uploading.{" "}
-            <Button variant="link" isInline component="span" onClick={toggleConversionProfiles}>
+            <Button variant="link" isInline component="span" onClick={handleConversionProfilesClick}>
               Manage conversion profiles
             </Button>
         </Content>
