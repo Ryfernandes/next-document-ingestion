@@ -36,7 +36,9 @@ import {
   MenuItem,
   TextInput,
   Checkbox,
-  TextArea
+  TextArea,
+  DrilldownMenu,
+  MenuContainer
 } from '@patternfly/react-core';
 
 import {
@@ -352,6 +354,14 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
       (resource) => !resources.some(resourceToRemove => getFileStem(resourceToRemove.file) === getFileStem(resource.file))
     );
 
+    const newConversionRequiredSelectedNames = selectedConversionRequiredFileNames.filter(
+      (fileName) => !resources.some(resourceToRemove => getFileStem(resourceToRemove.file) === getFileStem({ name: fileName, type: 'text/markdown', size: 0 } as File))
+    );
+
+    const newUploadCompleteSelectedNames = selectedUploadCompleteFileNames.filter(
+      (fileName) => !resources.some(resourceToRemove => getFileStem(resourceToRemove.file) === getFileStem({ name: fileName, type: 'text/markdown', size: 0 } as File))
+    );
+
     let closeGroup: string[] = []
 
     if (newConversionRequiredResources.length !== conversionRequiredResources.length && newConversionRequiredResources.length === 0) {
@@ -366,6 +376,8 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
 
     setConversionRequiredResources(newConversionRequiredResources);
     setUploadCompleteResources(newUploadCompleteResources);
+    setSelectedConversionRequiredFileNames(newConversionRequiredSelectedNames);
+    setSelectedUploadCompleteFileNames(newUploadCompleteSelectedNames);
   }
 
   // ------ MODAL THINGS -------
@@ -391,6 +403,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     setShowConversionProfiles(true);
     setOpenProfileDropdown(null);
     setOpenEditConversionProfileDropdown(null);
+    setFileActionsDropdownOpen(false);
 
     if (create) {
       setViewedProfile(creationDefault);
@@ -592,6 +605,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const numFilesSelected = selectedConversionRequiredFileNames.length + selectedUploadCompleteFileNames.length;
 
   const [selectFilesDropdownOpen, setSelectFilesDropdownOpen] = useState(false);
+  const [fileActionsDropdownOpen, setFileActionsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -601,6 +615,58 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   useEffect(() => {
     setShownUploadCompleteResources(uploadCompleteResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase())));
   }, [uploadCompleteResources, searchQuery]);
+  
+  // ------ DRILLDOWN -------
+
+  const [menuDrilledIn, setMenuDrilledIn] = useState<string[]>([]);
+  const [drilldownPath, setDrilldownPath] = useState<string[]>([]);
+  const [menuHeights, setMenuHeights] = useState<any>({});
+  const [activeMenu, setActiveMenu] = useState<string>('drilldown-rootMenu');
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const drillIn = (
+    _event: React.KeyboardEvent | React.MouseEvent,
+    fromMenuId: string,
+    toMenuId: string,
+    pathId: string
+  ) => {
+    setMenuDrilledIn([...menuDrilledIn, fromMenuId]);
+    setDrilldownPath([...drilldownPath, pathId]);
+    setActiveMenu(toMenuId);
+  };
+
+  const drillOut = (_event: React.KeyboardEvent | React.MouseEvent, toMenuId: string) => {
+    const menuDrilledInSansLast = menuDrilledIn.slice(0, menuDrilledIn.length - 1);
+    const pathSansLast = drilldownPath.slice(0, drilldownPath.length - 1);
+    setMenuDrilledIn(menuDrilledInSansLast);
+    setDrilldownPath(pathSansLast);
+    setActiveMenu(toMenuId);
+  };
+
+  const handleActionProfileSelect = (profile: conversionProfile) => {
+    if (numFilesSelected > 0) {
+      const newConversionRequiredResources = conversionRequiredResources.map((resource) => selectedConversionRequiredFileNames.includes(resource.file.name) ? { ...resource, conversionProfile: profile.alias } : resource);
+      setConversionRequiredResources(newConversionRequiredResources);
+    }
+
+    setFileActionsDropdownOpen(false);
+  }
+
+  const handleDeleteFiles = () => {
+    if (numFilesSelected > 0) {
+      const resourcesToDelete = [...conversionRequiredResources, ...uploadCompleteResources].filter((resource) => selectedConversionRequiredFileNames.includes(resource.file.name) || selectedUploadCompleteFileNames.includes(resource.file.name));
+      removeResources(resourcesToDelete);
+    }
+
+    setFileActionsDropdownOpen(false);
+  }
+
+  const setHeight = (menuId: string, height: number) => {
+    if (menuHeights[menuId] === undefined || (menuId !== 'rootMenu' && menuHeights[menuId] !== height)) {
+      setMenuHeights({ ...menuHeights, [menuId]: height });
+    }
+  };
 
   return (
     <>
@@ -678,10 +744,88 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                     />
                   </ToolbarItem>
                   <ToolbarItem key="convert-button">
-                    <Button variant="primary">Convert</Button>
+                    <Button
+                      variant="primary"
+                      isDisabled={numFilesSelected == 0}
+                    >
+                      Convert
+                    </Button>
                   </ToolbarItem>
                   <ToolbarItem key="actions-menu">
-                    <MenuToggle variant="secondary">Actions</MenuToggle>
+                    <MenuContainer
+                      isOpen={fileActionsDropdownOpen}
+                      onOpenChange={(isOpen: boolean) => setFileActionsDropdownOpen(isOpen)}
+                      menu={
+                        <Menu
+                          id="rootMenu"
+                          containsDrilldown
+                          drilldownItemPath={drilldownPath}
+                          drilledInMenus={menuDrilledIn}
+                          activeMenu={activeMenu}
+                          onDrillIn={drillIn}
+                          onDrillOut={drillOut}
+                          onGetMenuHeight={setHeight}
+                          ref={menuRef}
+                        >
+                          <MenuContent menuHeight={`${menuHeights[activeMenu]}px`}>
+                            <MenuList>
+                              <MenuItem
+                                itemId="group:set-conversion-profile"
+                                direction="down"
+                                drilldownMenu={
+                                  <DrilldownMenu id="drilldownMenuStart">
+                                    <MenuItem itemId="group:set-conversion-profile_breadcrumb" direction="up">
+                                      Set conversion profile ({conversionRequiredResources.length})
+                                    </MenuItem>
+                                    <Divider component="li" key="separator" />
+                                    {conversionProfiles.map((profile, idx) => (
+                                      <MenuItem
+                                        value={idx}
+                                        key={idx}
+                                        itemId={`conversion-profile-${idx}`}
+                                        onClick={() => handleActionProfileSelect(profile)}
+                                      >
+                                        {profile.alias}
+                                      </MenuItem>
+                                    ))}
+                                    <Divider component="li" key="separator-2" />
+                                    <MenuItem
+                                      value={conversionProfiles.length}
+                                      key="create"
+                                      itemId='create-conversion-profile'
+                                      onClick={() => handleConversionProfilesOpen(true)}
+                                    >
+                                      Create conversion profile
+                                    </MenuItem>
+                                  </DrilldownMenu>
+                                }
+                              >
+                                Set conversion profile ({conversionRequiredResources.length})
+                              </MenuItem>
+                              <MenuItem
+                                itemId="convert-files"
+                              >
+                                Convert files ({conversionRequiredResources.length})
+                              </MenuItem>
+                              <MenuItem
+                                itemId="delete-files"
+                                className="danger-item"
+                                onClick={handleDeleteFiles}
+                              >
+                                Delete files ({numFilesSelected})
+                              </MenuItem>
+                            </MenuList>
+                          </MenuContent>
+                        </Menu>
+                      }
+                      menuRef={menuRef}
+                      toggle={
+                        <MenuToggle isDisabled={numFilesSelected == 0} variant="secondary" ref={toggleRef} onClick={() => setFileActionsDropdownOpen(!fileActionsDropdownOpen)} isExpanded={fileActionsDropdownOpen}>
+                          Actions
+                        </MenuToggle>
+                      }
+                      toggleRef={toggleRef}
+                    />
                   </ToolbarItem>
                 </ToolbarContent>
               </Toolbar>

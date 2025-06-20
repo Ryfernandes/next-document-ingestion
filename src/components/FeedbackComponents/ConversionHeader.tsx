@@ -44,7 +44,7 @@ const ConversionHeader: React.FunctionComponent<ConversionHeaderProps> = ({ open
       >
         <Content component="p" style={{ marginTop: '1rem'}}>
           Resources such as textbooks, technical manuals, encyclopedias, journals, or websites are used as the knowledge source for training your model. 
-          Files must be converted to Markdown formatbefore being added to the workspace. 
+          Files must be converted to Markdown format before being added to the workspace. 
           You can convert files and customize conversion profiles below or use{" "}
             <Content component="a" href="https://github.com/docling-project/docling" target="_blank" rel="noopener noreferrer">
               Docling
