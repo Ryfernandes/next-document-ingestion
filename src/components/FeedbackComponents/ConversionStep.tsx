@@ -85,6 +85,7 @@ type ConversionStepProps = {
 // Later, add workspace file support
 // Figure out max dropdown menu height
 // Correct path of create disable, warning text, click
+// Capitalized JPG file type unknown
 
 const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const [page, setPage] = useState(1);
@@ -396,7 +397,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   }
 
   const [showSaveWarning, setShowSaveWarning] = useState(false);
-  const [showSaveVariant, setShowSaveVariant] = useState<'change' | 'exit'>('exit');
+  const [showSaveVariant, setShowSaveVariant] = useState<'change' | 'exit' | 'create'>('exit');
   const [viewedProfile, setViewedProfile] = useState<conversionProfile>(conversionProfiles[0]);
   const [viewedProfileDisplay, setViewedProfileDisplay] = useState<conversionProfileDisplay>(getConversionProfileDisplay(conversionProfiles[0]));
   const [initialViewedProfile, setInitialViewedProfile] = useState<conversionProfile>(conversionProfiles[0]);
@@ -525,11 +526,19 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
 
   const handleCreateClick = () => {
     if (initialViewedProfile.alias !== "") {
+      if (isDangerous && !showSaveWarning) {
+        setShowSaveVariant('create');
+        setShowSaveWarning(true);
+        return;
+
+      }
+
       setAliasErrors([]);
       setPlaceholderErrors([]);
       setViewedProfile(creationDefault);
       setInitialViewedProfile(creationDefault);
       setOpenEditConversionProfileDropdown(null);
+      setShowSaveWarning(false);
     }
   }
 
@@ -540,11 +549,17 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     }
   }
 
-  const handleResetToDefault = () => {
+  const handleSaveProfile = () => {
+    if (!getErrors(viewedProfile.alias, 'alias') && !getErrors(viewedProfile.md_page_break_placeholder, 'md_page_break_placeholder')) {
+      setConversionProfiles((prev) => prev.map((profile) => profile.alias === initialViewedProfile.alias ? viewedProfile : profile));
+      setInitialViewedProfile(viewedProfile);
+    }
+  }
+
+  const handleResetChanges = () => {
     setAliasErrors([]);
     setPlaceholderErrors([]);
-    setViewedProfile(creationDefault);
-    setInitialViewedProfile(creationDefault);
+    setViewedProfile(initialViewedProfile);
     setOpenEditConversionProfileDropdown(null);
   }
 
@@ -555,6 +570,10 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
 
     if (showSaveVariant === 'change') {
       onProfileSelect(null, nextProfileAlias);
+    }
+
+    if (showSaveVariant === 'create') {
+      handleCreateClick();
     }
   }
 
@@ -907,7 +926,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                 </MenuContent>
               </Menu>
             </FlexItem>
-            <FlexItem flex={{ default: 'flex_1' }} className='settings-view-container' ref={settingsViewContainerRef}>
+            <FlexItem flex={{ default: 'flex_1' }} className={`settings-view-container ${initialViewedProfile.alias === "" ? "green-border" : hasChanged ? "blue-border" : ""}`} ref={settingsViewContainerRef}>
               <Content style={{ fontSize: '0.8rem'}} component="p">Want to learn more about these options? Click <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">here</Content> </Content>
               <Flex columnGap={{ default: 'columnGap2xl' }}>
                 <FlexItem flex={{ default: 'flex_1' }}>
@@ -1215,7 +1234,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                   <FlexItem>
                     <Flex>
                       <FlexItem>
-                        <Button variant="secondary" isDisabled={!hasChanged} onClick={handleResetToDefault}>
+                        <Button variant="secondary" isDisabled={!hasChanged} onClick={handleResetChanges}>
                           Reset to Default
                         </Button>
                       </FlexItem>
@@ -1228,7 +1247,27 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                   </FlexItem>
                 </>
             ) : (
-              <Content>place</Content>
+              <>
+                <FlexItem>
+                  <Button variant={`${isDangerous ? 'danger' : 'secondary'}`} onClick={handleConversionProfilesClose}>
+                    Exit
+                  </Button>
+                </FlexItem>
+                <FlexItem>
+                  <Flex>
+                    <FlexItem>
+                      <Button variant="secondary" isDisabled={!hasChanged} onClick={handleResetChanges}>
+                        Reset Changes
+                      </Button>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button isDisabled={!hasChanged || hasErrors} onClick={handleSaveProfile}>
+                        Save Changes
+                      </Button>
+                    </FlexItem>
+                  </Flex>
+                </FlexItem>
+              </>
             )}
           </Flex>
         </ModalFooter>

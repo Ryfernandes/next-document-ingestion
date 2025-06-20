@@ -13,6 +13,14 @@
   overflow-y: auto;
 }
 
+.green-border {
+  border: 1px solid #3D7317;
+}
+
+.blue-border {
+  border: 1px solid #0066CC;
+}
+
 .pf-v6-c-menu-toggle.manage-conversion-profiles-dropdown {
   width: 100%;
   transition: none;
