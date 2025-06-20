@@ -67,9 +67,6 @@ import FilePowerpoint from '@patternfly/react-icons/dist/esm/icons/outlined-file
 import FileWord from '@patternfly/react-icons/dist/esm/icons/outlined-file-word-icon';
 import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 import PlusIcon from '@patternfly/react-icons/dist/esm/icons/plus-icon';
-import { init } from 'next/dist/compiled/webpack/webpack';
-import { create } from 'domain';
-import next from 'next';
 
 type Resource = {
   datetimeUploaded: Date;
@@ -129,7 +126,12 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
       setSelectedConversionRequiredFileNames(isSelecting ? conversionRequiredResources.map((resource) => resource.file.name) : []);
     } else if (group === 'upload-complete') {
       setSelectedUploadCompleteFileNames(isSelecting ? uploadCompleteResources.map((resource) => resource.file.name) : []);
+    } else if (group === 'all') {
+      setSelectedConversionRequiredFileNames(isSelecting ? conversionRequiredResources.map((resource) => resource.file.name) : []);
+      setSelectedUploadCompleteFileNames(isSelecting ? uploadCompleteResources.map((resource) => resource.file.name) : []);
     }
+
+    setSelectFilesDropdownOpen(false);
   }
 
   const areAllConversionRequiredResourcesSelected = selectedConversionRequiredFileNames.length === conversionRequiredResources.length;
@@ -581,6 +583,13 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     setShowSaveWarning(false);
   }
 
+  // ------ TOOLBAR THINGS ------
+
+  const totalFiles = conversionRequiredResources.length + uploadCompleteResources.length;
+  const numFilesSelected = selectedConversionRequiredFileNames.length + selectedUploadCompleteFileNames.length;
+
+  const [selectFilesDropdownOpen, setSelectFilesDropdownOpen] = useState(false);
+
   return (
     <>
       <ConversionHeader openConversionProfiles={handleConversionProfilesOpen} setShowDocumentation={setShowDocumentation} />
@@ -607,12 +616,46 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
               <Toolbar style={{ marginTop: '2.5rem' }}>
                 <ToolbarContent>
                   <ToolbarItem key="checkbox">
-                    <MenuToggle
-                      splitButtonItems={[
-                        <MenuToggleCheckbox key="split-button-checkbox" id="split-button-checkbox"/>
-                      ]}
+                    <Dropdown
+                      isOpen={selectFilesDropdownOpen}
+                      onSelect={() => setSelectFilesDropdownOpen(true)}
+                      onOpenChange={(isOpen: boolean) => setSelectFilesDropdownOpen(isOpen)}
+                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                        <MenuToggle
+                          ref={toggleRef}
+                          onClick={() => setSelectFilesDropdownOpen(!selectFilesDropdownOpen)}
+                          isExpanded={selectFilesDropdownOpen}
+                          splitButtonItems={[
+                            <MenuToggleCheckbox 
+                              key="split-button-checkbox" 
+                              id="split-button-checkbox"
+                              onChange={(isSelecting) => selectAllFiles(isSelecting, 'all')}
+                              isChecked={numFilesSelected == 0 ? false : numFilesSelected === totalFiles ? true : null}
+                            />
+                          ]}
+                        >
+                          {numFilesSelected} selected
+                        </MenuToggle>
+                      )}
+                      shouldFocusToggleOnSelect
                     >
-                    </MenuToggle>
+                      <DropdownList>
+                        <DropdownItem
+                          value={0}
+                          key="select-none"
+                          onClick={() => selectAllFiles(false, 'all')}
+                        >
+                          Select none (0 items)
+                        </DropdownItem>
+                        <DropdownItem
+                          value={1}
+                          key="select-all"
+                          onClick={() => selectAllFiles(true, 'all')}
+                        >
+                          Select all ({totalFiles} items)
+                        </DropdownItem>
+                      </DropdownList>
+                    </Dropdown>
                   </ToolbarItem>
                   <ToolbarItem key="search">
                     <SearchInput 
