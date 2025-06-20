@@ -104,6 +104,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const [conversionRequiredResources, setConversionRequiredResources] = useState<Resource[]>([]);
   const [uploadCompleteResources, setUploadCompleteResources] = useState<Resource[]>([]);
 
+  const [shownConversionRequiredResources, setShownConversionRequiredResources] = useState<Resource[]>([]);
+  const [shownUploadCompleteResources, setShownUploadCompleteResources] = useState<Resource[]>([]);
+
   const [selectedConversionRequiredFileNames, setSelectedConversionRequiredFileNames] = useState<string[]>([]);
   const [selectedUploadCompleteFileNames, setSelectedUploadCompleteFileNames] = useState<string[]>([]);
 
@@ -589,6 +592,15 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const numFilesSelected = selectedConversionRequiredFileNames.length + selectedUploadCompleteFileNames.length;
 
   const [selectFilesDropdownOpen, setSelectFilesDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setShownConversionRequiredResources(conversionRequiredResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase())));
+  }, [conversionRequiredResources, searchQuery]);
+
+  useEffect(() => {
+    setShownUploadCompleteResources(uploadCompleteResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase())));
+  }, [uploadCompleteResources, searchQuery]);
 
   return (
     <>
@@ -660,6 +672,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                   <ToolbarItem key="search">
                     <SearchInput 
                       placeholder="Find by name"
+                      value={searchQuery}
+                      onChange={(_event, value) => setSearchQuery(value)}
+                      onClear={() => setSearchQuery('')}
                     />
                   </ToolbarItem>
                   <ToolbarItem key="convert-button">
@@ -703,7 +718,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                         </FlexItem>
                       </Flex>
                     </Th>
-                    {isGroupExpanded('conversion-required') && conversionRequiredResources.length > 0 && (
+                    {isGroupExpanded('conversion-required') && shownConversionRequiredResources.length > 0 && (
                       <>
                         <Th screenReaderText='Empty'/>
                         <Th screenReaderText='Empty'/>
@@ -714,7 +729,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {isGroupExpanded('conversion-required') && conversionRequiredResources.map((resource, index) => (
+                  {isGroupExpanded('conversion-required') && shownConversionRequiredResources.map((resource, index) => (
                     <Tr key={index} className='conversion-required-row fat-row'>
                       <Td/>
                       <Td select={{
@@ -846,7 +861,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                         </FlexItem>
                       </Flex>
                     </Th>
-                    {isGroupExpanded('upload-complete') && uploadCompleteResources.length > 0 && (
+                    {isGroupExpanded('upload-complete') && shownUploadCompleteResources.length > 0 && (
                       <>
                         <Th screenReaderText='Empty'/>
                         <Th screenReaderText='Empty'/>
@@ -857,7 +872,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                   </Tr>
                 </Thead>
                 <Tbody key='upload-complete'>
-                  {isGroupExpanded('upload-complete') && uploadCompleteResources.map((resource, index) => (
+                  {isGroupExpanded('upload-complete') && shownUploadCompleteResources.map((resource, index) => (
                     <Tr key={index} className="upload-complete-row fat-row">
                       <Td/>
                       <Td select={{
