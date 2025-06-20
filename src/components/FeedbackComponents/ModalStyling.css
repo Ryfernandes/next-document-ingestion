@@ -9,7 +9,7 @@
   padding: 1rem 2rem 1rem 2rem;
   border: 1px solid #c7c7c7;
   border-radius: 0.5rem;
-  max-height: 400px;
+  max-height: 550px;
   overflow-y: auto;
 }
 
@@ -19,5 +19,20 @@
 }
 
 .new-option {
+  margin-top: 0.5rem;
+}
+
+.pf-v6-l-flex.conversion-profiles-header {
+  padding: 0.5rem 1.5rem 0.5rem 1.5rem;
+  border-bottom: 1px solid #c7c7c7;
+  margin-bottom: 0.5rem;
+}
+
+.green-icon {
+  color: #3D7317;
+}
+
+.conversion-profiles-footer {
+  border-top: 1px solid #c7c7c7;
   margin-top: 0.5rem;
 }

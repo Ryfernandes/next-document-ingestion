@@ -66,6 +66,10 @@ import FilePDF from '@patternfly/react-icons/dist/esm/icons/outlined-file-pdf-ic
 import FilePowerpoint from '@patternfly/react-icons/dist/esm/icons/outlined-file-powerpoint-icon';
 import FileWord from '@patternfly/react-icons/dist/esm/icons/outlined-file-word-icon';
 import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
+import PlusIcon from '@patternfly/react-icons/dist/esm/icons/plus-icon';
+import { init } from 'next/dist/compiled/webpack/webpack';
+import { create } from 'domain';
+import next from 'next';
 
 type Resource = {
   datetimeUploaded: Date;
@@ -80,6 +84,7 @@ type ConversionStepProps = {
 
 // Later, add workspace file support
 // Figure out max dropdown menu height
+// Correct path of create disable, warning text, click
 
 const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const [page, setPage] = useState(1);
@@ -360,28 +365,48 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   // ------ MODAL THINGS -------
 
   const handleConversionProfilesClose = () => {
+    if (isDangerous && !showSaveWarning) {
+      setShowSaveVariant('exit');
+      setShowSaveWarning(true);
+      return;
+    }
+
     setShowConversionProfiles(false);
+    setOpenProfileDropdown(null);
+    setViewedProfile(conversionProfiles[0]);
+    setInitialViewedProfile(conversionProfiles[0]);
+    setAliasErrors([]);
+    setPlaceholderErrors([]);
+    setShowSaveWarning(false);
+    setOpenEditConversionProfileDropdown(null);
   }
 
   const handleConversionProfilesOpen = (create: boolean = false) => {
     setShowConversionProfiles(true);
     setOpenProfileDropdown(null);
+    setOpenEditConversionProfileDropdown(null);
 
     if (create) {
       setViewedProfile(creationDefault);
-      setInitialViewedAlias(null);
-      
+      setInitialViewedProfile(creationDefault);
     } else {
       setViewedProfile(conversionProfiles[0]);
-      setInitialViewedAlias(conversionProfiles[0].alias);
+      setInitialViewedProfile(conversionProfiles[0]);
     }
   }
 
+  const [showSaveWarning, setShowSaveWarning] = useState(false);
+  const [showSaveVariant, setShowSaveVariant] = useState<'change' | 'exit'>('exit');
   const [viewedProfile, setViewedProfile] = useState<conversionProfile>(conversionProfiles[0]);
   const [viewedProfileDisplay, setViewedProfileDisplay] = useState<conversionProfileDisplay>(getConversionProfileDisplay(conversionProfiles[0]));
-  const [initialViewedAlias, setInitialViewedAlias] = useState<string | null>(null);
+  const [initialViewedProfile, setInitialViewedProfile] = useState<conversionProfile>(conversionProfiles[0]);
   const [aliasErrors, setAliasErrors] = useState<string[]>([]);
   const [placeholderErrors, setPlaceholderErrors] = useState<string[]>([]);
+  const [nextProfileAlias, setNextProfileAlias] = useState<string>("");
+
+  const hasErrors = aliasErrors.length > 0 || placeholderErrors.length > 0 || viewedProfile.alias.length === 0;
+  const hasChanged = !equivalentConversionProfiles(viewedProfile, initialViewedProfile);
+  const isDangerous = hasChanged || initialViewedProfile.alias === "";
 
   useEffect(() => {
     setViewedProfileDisplay(getConversionProfileDisplay(viewedProfile));
@@ -391,20 +416,26 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const maxPlaceholderCharacters = 200;
 
   const onProfileSelect = (_event: any, itemId: any) => {
+    if (isDangerous && !showSaveWarning) {
+      setNextProfileAlias(itemId);
+      setShowSaveVariant('change');
+      setShowSaveWarning(true);
+      return;
+    }
+
     settingsViewContainerRef.current?.scrollTo({ top: 0 });
     setAliasErrors([]);
     setPlaceholderErrors([]);
+    setOpenEditConversionProfileDropdown(null);
 
     const profile = conversionProfiles.find((profile) => profile.alias === itemId);
     
     if (profile) {
       setViewedProfile(profile);
-      setInitialViewedAlias(profile.alias);
+      setInitialViewedProfile(profile);
     }
-    if (itemId === 'create') {
-      setViewedProfile(creationDefault);
-      setInitialViewedAlias(null);
-    }
+
+    setShowSaveWarning(false);
   }
 
   const getErrors = (value: string | boolean, accessor: keyof conversionProfile): boolean => {
@@ -416,7 +447,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
         errors.push("Please enter an alias");
       }
 
-      if (conversionProfiles.map(profile => profile.alias).includes(newAlias) && newAlias !== initialViewedAlias) {
+      if (conversionProfiles.map(profile => profile.alias).includes(newAlias) && newAlias !== initialViewedProfile.alias) {
         errors.push(`The alias "${newAlias}" is already in use`);
       }
 
@@ -491,6 +522,45 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     {"value": "fast", "display": "Fast"},
     {"value": "accurate", "display": "Accurate"}
   ]
+
+  const handleCreateClick = () => {
+    if (initialViewedProfile.alias !== "") {
+      setAliasErrors([]);
+      setPlaceholderErrors([]);
+      setViewedProfile(creationDefault);
+      setInitialViewedProfile(creationDefault);
+      setOpenEditConversionProfileDropdown(null);
+    }
+  }
+
+  const handleCreateProfile = () => {
+    if (!getErrors(viewedProfile.alias, 'alias') && !getErrors(viewedProfile.md_page_break_placeholder, 'md_page_break_placeholder')) {
+      setConversionProfiles((prev) => [...prev, viewedProfile]);
+      setInitialViewedProfile(viewedProfile);
+    }
+  }
+
+  const handleResetToDefault = () => {
+    setAliasErrors([]);
+    setPlaceholderErrors([]);
+    setViewedProfile(creationDefault);
+    setInitialViewedProfile(creationDefault);
+    setOpenEditConversionProfileDropdown(null);
+  }
+
+  const handleDiscardChanges = () => {
+    if (showSaveVariant === 'exit') {
+      handleConversionProfilesClose();
+    }
+
+    if (showSaveVariant === 'change') {
+      onProfileSelect(null, nextProfileAlias);
+    }
+  }
+
+  const handleDismissWarning = () => {
+    setShowSaveWarning(false);
+  }
 
   return (
     <>
@@ -816,17 +886,23 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
           <Flex style={{ marginTop: '2rem' }} columnGap={{ default: 'columnGapLg' }}>
             <FlexItem>
               <Menu className="inset-menu" activeItemId={viewedProfile.alias} onSelect={onProfileSelect} isScrollable>
-                <MenuContent maxMenuHeight="300px">
+                <MenuContent>
+                  <Flex className="conversion-profiles-header" justifyContent={{ default: 'justifyContentSpaceBetween' }}>
+                    <FlexItem>
+                      <Content component='p'>Conversion Profiles</Content>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button icon={<PlusIcon className={`${initialViewedProfile.alias === "" && 'green-icon'}`}/>} variant="plain" isClicked={initialViewedProfile.alias === ""} onClick={handleCreateClick}  className="create-profile-button" />
+                    </FlexItem>
+                  </Flex>
+                </MenuContent>
+                <MenuContent maxMenuHeight="494px">
                   <MenuList>
                     {conversionProfiles.map((profile, index) => (
-                      <MenuItem key={index} itemId={profile.alias} isFocused={profile.alias === initialViewedAlias}>
+                      <MenuItem key={index} itemId={profile.alias} isFocused={profile.alias === initialViewedProfile.alias}>
                         {profile.alias}
                       </MenuItem>
                     ))}
-                    <Divider component="li" key="separator" />
-                    <MenuItem key="create" itemId="create" isFocused={initialViewedAlias === null}>
-                      + Create conversion profile
-                    </MenuItem>
                   </MenuList>
                 </MenuContent>
               </Menu>
@@ -1127,6 +1203,64 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
             </FlexItem>
           </Flex>
         </ModalBody>
+        <ModalFooter className='conversion-profiles-footer'>
+          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }}  style={{ width: '100%' }}>
+            {initialViewedProfile.alias === "" ? (
+                <>
+                  <FlexItem>
+                    <Button variant={`${isDangerous ? 'danger' : 'secondary'}`} onClick={handleConversionProfilesClose}>
+                      Exit
+                    </Button>
+                  </FlexItem>
+                  <FlexItem>
+                    <Flex>
+                      <FlexItem>
+                        <Button variant="secondary" isDisabled={!hasChanged} onClick={handleResetToDefault}>
+                          Reset to Default
+                        </Button>
+                      </FlexItem>
+                      <FlexItem>
+                        <Button isDisabled={hasErrors} onClick={handleCreateProfile}>
+                          Create
+                        </Button>
+                      </FlexItem>
+                    </Flex>
+                  </FlexItem>
+                </>
+            ) : (
+              <Content>place</Content>
+            )}
+          </Flex>
+        </ModalFooter>
+      </Modal>
+
+      <Modal
+        isOpen={showSaveWarning}
+        disableFocusTrap
+        variant="small"
+        aria-label="unsaved changes warning"
+        aria-labelledby="unsaved-changes-warning-title"
+        aria-describedby="unsaved-changes-warning-variant"
+      >
+        <ModalHeader title="Unsaved Changes" labelId="unsaved-changes-warning-title" titleIconVariant="warning" />
+        <ModalBody id="unsaved-changes-warning-variant">
+          <Content component='p'>Are you sure you want to {showSaveVariant == 'exit' ? 'exit': 'switch profiles'}? Changes have been made to this profile that will not be saved</Content>
+        </ModalBody>
+        <ModalFooter>
+          <Flex>
+            <FlexItem>
+              <Button key="discard" variant="danger" onClick={handleDiscardChanges}>
+                Discard changes
+              </Button>
+            </FlexItem>
+
+            <FlexItem>
+              <Button key="cancel" variant="secondary" onClick={handleDismissWarning}>
+                Cancel
+              </Button>
+            </FlexItem>
+          </Flex>
+        </ModalFooter>
       </Modal>
     </>
   );
