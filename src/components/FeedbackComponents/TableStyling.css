@@ -47,6 +47,10 @@
   color: #B1380B;
 }
 
+.pf-m-disabled .pf-v6-c-menu__item.danger-item {
+  color: #a3a3a3;
+}
+
 .pf-v6-c-table .conversion-required-title {
   min-width: 265px;
 }
@@ -57,4 +61,22 @@
 
 .pf-v6-c-table .row-end-menu-container {
   width: 80px;
+}
+
+.select-files-toggle .pf-v6-c-menu-toggle__text {
+  min-width: 70px;
+}
+
+.conversion-profile-dropdown {
+  max-height: 225px;
+  overflow-y: auto;
+}
+
+.pf-v6-c-menu.pf-m-drilldown .pf-v6-c-menu__list.conversion-profile-dropdown {
+  max-height: 225px;
+  overflow-y: auto;
+}
+
+.pf-v6-c-menu.no-gap .pf-v6-c-menu__content {
+  gap: 0;
 }

@@ -160,15 +160,20 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
               ))}
             </Content>
           )}
-          <Content component="p">Please choose how to proceed. Automatically adding suffixes ({getFileStem(duplicateFiles[0])}-1) is recommended and will keep both the old and new files</Content>
+          <Content component="p">Please choose how to proceed.</Content>
         </>
       );
     }
 
     return (
-      <Content component="p">
-        The file name <strong>{getFileStem(duplicateFiles[0])}</strong> is already in use in your workspace. Please choose how to proceed. Automatically adding suffixes ({getFileStem(duplicateFiles[0])}-1) is recommended and will keep both the old and new files
-      </Content>
+      <>
+        <Content component="p">
+          The file name <strong>{getFileStem(duplicateFiles[0])}</strong> is already in use in your workspace.
+        </Content>
+        <Content component="p">
+          Please choose how to proceed.
+        </Content>
+      </>
     );
   };
 
@@ -215,8 +220,8 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
                     </Button>
                   </FlexItem>
                   <FlexItem>
-                    <Button key="add-suffixes" variant="primary" onClick={addSuffixes}>
-                      Add suffixes
+                    <Button key="keep-both-files" variant="primary" onClick={addSuffixes}>
+                      Keep both files
                     </Button>
                   </FlexItem>
                 </Flex>

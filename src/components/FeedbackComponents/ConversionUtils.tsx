@@ -124,24 +124,24 @@ const convertToMarkdownWithOptionsIfNeeded = async (filePackage: ConversionPacka
 };
 
 export const convertFilesToMarkdownWithOptions = async (
-  resourcePackagesToConvert: ResourcePackageGroup[],
+  toConvertRef: React.RefObject<ResourcePackageGroup[]>,
   wasCanceled: () => boolean,
-  //refreshPackageGroups: (groups: ResourcePackageGroup[]) => ResourcePackageGroup[],
   returnResource: (newResource: Resource) => void,
   onError: (message: string) => void
 ) => {
   const newFiles: File[] = [];
 
   // Convert files to .md if needed
-  for (const resourcePackage of resourcePackagesToConvert) {
+  while (toConvertRef.current.length > 0) {
     if (!wasCanceled()) {
+      const resourcePackage = toConvertRef.current[0];
+
       try {
         const convertedFile = await convertToMarkdownWithOptionsIfNeeded({ file: resourcePackage.resource.file, profile: resourcePackage.conversionProfile });
         const newResource = { ...resourcePackage.resource, originalFile: resourcePackage.resource.file, file: convertedFile, datetimeConverted: new Date() };
         
         returnResource(newResource);
-        //await refreshPackageGroups(resourcePackagesToConvert);
-
+        toConvertRef.current.shift();
       } catch (err) {
         if (err instanceof Error) {
           console.error('File conversion failed for:', resourcePackage.resource.file.name, err);
