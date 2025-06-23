@@ -56,6 +56,7 @@ import ConversionHeader from './ConversionHeader';
 import FileUpload from './FileUpload';
 
 import { conversionProfile, conversionProfileDisplay, equivalentConversionProfiles, creationDefault, defaultConversionProfiles, getConversionProfileDisplay } from '@/utils/conversionProfiles';
+import { convertFilesToMarkdownWithOptions } from './ConversionUtils';
 
 import WarningIcon from '@patternfly/react-icons/dist/esm/icons/exclamation-triangle-icon';
 import CheckCircleIcon from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
@@ -70,11 +71,19 @@ import FileWord from '@patternfly/react-icons/dist/esm/icons/outlined-file-word-
 import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 import PlusIcon from '@patternfly/react-icons/dist/esm/icons/plus-icon';
 
+import { Spinner } from '@patternfly/react-core'
+
 type Resource = {
   datetimeUploaded: Date;
+  datetimeConverted?: Date;
   originalFile: File | null;
   file: File;
   conversionProfile: string;
+}
+
+type ResourcePackageGroup = {
+  resource: Resource;
+  conversionProfile: conversionProfile;
 }
 
 type ConversionStepProps = {
@@ -287,7 +296,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     }
   }
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date, converted: boolean) => {
     const options: Intl.DateTimeFormatOptions = {
       day: 'numeric',
       month: 'long',
@@ -301,7 +310,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     const formatter = new Intl.DateTimeFormat('en-US', options);
     const formattedDate = formatter.format(date);
   
-    return `Uploaded ${formattedDate} EST`;
+    return `${converted ? "Converted" : "Uploaded"} ${formattedDate} EST`;
   }
 
   const [conversionProfiles, setConversionProfiles] = useState<conversionProfile[]>(defaultConversionProfiles);
@@ -340,6 +349,31 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const handleFileActionSelect = (resource: Resource, value: string) => {
     if (value === "delete") {
       removeResources([resource]);
+    }
+
+    if (value === "view") {
+      viewFileInNewTab(resource.file);
+    }
+
+    if (value === "convert") {
+      onConvert([resource]);
+    }
+
+    if (value === "revert") {
+      const newResource: Resource = {
+        "datetimeUploaded": resource.datetimeUploaded,
+        "originalFile": null,
+        "file": resource.originalFile || resource.file,
+        "conversionProfile": resource.conversionProfile
+      }
+
+      setUploadCompleteResources((prev) => prev.filter((res) => res.file.name !== resource.file.name));
+      setConversionRequiredResources((prev) => [...prev, newResource]);
+
+      if (selectedUploadCompleteFileNames.includes(resource.file.name)) {
+        setSelectedUploadCompleteFileNames((prev) => prev.filter((fileName) => fileName !== resource.file.name));
+        setSelectedConversionRequiredFileNames((prev) => [...prev, newResource.file.name]);
+      }
     }
 
     setOpenFileActionsDropdown(null);
@@ -615,7 +649,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   useEffect(() => {
     setShownUploadCompleteResources(uploadCompleteResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase())));
   }, [uploadCompleteResources, searchQuery]);
-  
+
   // ------ DRILLDOWN -------
 
   const [menuDrilledIn, setMenuDrilledIn] = useState<string[]>([]);
@@ -667,6 +701,63 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
       setMenuHeights({ ...menuHeights, [menuId]: height });
     }
   };
+
+  // ------ CONVERSION --------
+
+  const [conversionActive, setConversionActive] = useState(false);
+  const [convertingFileNames, setConvertingFileNames] = useState<string[]>([]);
+
+  const addConvertedResource = (resource: Resource) => {
+    setConversionRequiredResources((prev) => prev.filter((res) => res.file.name !== resource.originalFile?.name));
+    setUploadCompleteResources((prev) => [...prev, resource]);
+    setConvertingFileNames((prev) => prev.filter((fileName) => fileName !== resource.originalFile?.name));
+
+    if (resource.originalFile && selectedConversionRequiredFileNames.includes(resource.originalFile.name)) {
+      setSelectedConversionRequiredFileNames((prev) => prev.filter((fileName) => fileName !== resource.originalFile?.name));
+      setSelectedUploadCompleteFileNames((prev) => [...prev, resource.file.name]);
+    }
+  }
+
+  const onConvert = async (toConvert: Resource[]) => {
+    setConversionActive(true);
+
+    const toConvertGroups = toConvert.map((resource) => {
+      const profile = conversionProfiles.find((profile) => profile.alias === resource.conversionProfile) || conversionProfiles[0];
+
+      return {
+        resource: resource,
+        conversionProfile: profile
+      }
+    })
+
+    if (!conversionActive) {
+      setConvertingFileNames(toConvert.map((resource) => resource.file.name));
+
+      await convertFilesToMarkdownWithOptions(
+        toConvertGroups,
+        () => false,
+        addConvertedResource,
+        (message: string) => {alert(message)}
+      ).then(() => {
+        setConversionActive(false);
+      })
+    } else {
+      alert("Conversion is already in progress. Please wait for it to complete.");
+    }
+  }
+
+  const handleConvert = () => {
+    onConvert(conversionRequiredResources.filter((resource) => selectedConversionRequiredFileNames.includes(resource.file.name)));
+    setSelectedConversionRequiredFileNames([]);
+    setSelectedUploadCompleteFileNames([]);
+  }
+
+  // ------ VIEW -------
+
+  const viewFileInNewTab = (file: File) => {
+    const fileURL = URL.createObjectURL(file);
+    window.open(fileURL, '_blank')?.focus();
+  }
 
   return (
     <>
@@ -747,6 +838,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                     <Button
                       variant="primary"
                       isDisabled={numFilesSelected == 0}
+                      onClick={handleConvert}
                     >
                       Convert
                     </Button>
@@ -804,6 +896,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                               </MenuItem>
                               <MenuItem
                                 itemId="convert-files"
+                                onClick={handleConvert}
                               >
                                 Convert files ({conversionRequiredResources.length})
                               </MenuItem>
@@ -875,7 +968,11 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                 <Tbody>
                   {isGroupExpanded('conversion-required') && shownConversionRequiredResources.map((resource, index) => (
                     <Tr key={index} className='conversion-required-row fat-row'>
-                      <Td/>
+                      <Td>
+                        {convertingFileNames.includes(resource.file.name) && (
+                          <Spinner diameter="18px" aria-label={`Converting ${resource.file.name}`} />
+                        )}
+                      </Td>
                       <Td select={{
                           rowIndex: index,
                           isSelected: isResourceSelected(resource),
@@ -1001,7 +1098,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                           </Content>
                         </FlexItem>
                         <FlexItem>
-                          <Badge style={{ transform: 'translateY(-1px)' }} screenReaderText="Uploaded complete">{uploadCompleteResources.length}</Badge>
+                          <Badge style={{ transform: 'translateY(-1px)' }} screenReaderText="Upload complete">{uploadCompleteResources.length}</Badge>
                         </FlexItem>
                       </Flex>
                     </Th>
@@ -1036,7 +1133,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                         </Flex>
                       </Td>
                       <Td>{sizeForDisplay(resource.file.size)}</Td>
-                      <Td>{formatDate(resource.datetimeUploaded)}</Td>
+                      <Td>{resource.datetimeConverted ? formatDate(resource.datetimeConverted, true): formatDate(resource.datetimeUploaded, false)}</Td>
                       <Td className='row-end-menu-container'>
                         <Dropdown
                           popperProps={{ position: 'right' }}
@@ -1060,11 +1157,11 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                             </DropdownItem>
                             <DropdownItem
                               value={1}
-                              key="convert"
-                              onClick={() => {handleFileActionSelect(resource, "convert")}}
+                              key="revert-conversion"
+                              onClick={() => {handleFileActionSelect(resource, "revert")}}
                               isSelected={false}
                             >
-                              Convert file
+                              Revert conversion
                             </DropdownItem>
                             <Divider component="li" key="separator" />
                             <DropdownItem
