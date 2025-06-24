@@ -235,11 +235,11 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     }).then(() => {
       let closeGroup: string[] = []
 
-      if (!conversionRequiredClosed && newConversionRequiredResources.length === 0) {
+      if (!conversionRequiredClosed && newConversionRequiredResources.length === 0 && [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown').length == 0) {
         closeGroup.push("conversion-required");
       }
 
-      if (!uploadCompleteClosed && newUploadCompleteResources.length === 0) {
+      if (!uploadCompleteClosed && newUploadCompleteResources.length === 0 && [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown').length == 0) {
         closeGroup.push("upload-complete");
       }
 
