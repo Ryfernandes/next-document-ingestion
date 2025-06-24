@@ -1,7 +1,6 @@
 // src/components/FeedbackComponents/ConversionUtils.tsx
 
 import { conversionProfile } from "@/utils/conversionProfiles";
-import { blob } from "stream/consumers";
 
 type ConversionPackage = {
   file: File;
@@ -141,7 +140,9 @@ export const convertFilesToMarkdownWithOptions = async (
   abortControllerRef: React.RefObject<AbortController>,
   wasCanceled: () => boolean,
   returnResource: (newResource: Resource) => void,
-  onError: (message: string) => void
+  onError: (message: string) => void,
+  start: () => void,
+  reset: () => void
 ) => {
   const newFiles: File[] = [];
 
@@ -151,12 +152,18 @@ export const convertFilesToMarkdownWithOptions = async (
       const resourcePackage = toConvertRef.current[0];
 
       try {
+        // Start timer
+        start();
+
         abortControllerRef.current = new AbortController();
         const convertedFile = await convertToMarkdownWithOptionsIfNeeded({ file: resourcePackage.resource.file, profile: resourcePackage.conversionProfile }, abortControllerRef.current.signal);
         const newResource = { ...resourcePackage.resource, originalFile: resourcePackage.resource.file, file: convertedFile, datetimeConverted: new Date() };
         
         returnResource(newResource);
         toConvertRef.current.shift();
+
+        // Reset timer
+        reset();
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {
           console.log('Aborted conversion')

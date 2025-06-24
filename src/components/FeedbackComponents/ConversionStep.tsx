@@ -38,7 +38,8 @@ import {
   Checkbox,
   TextArea,
   DrilldownMenu,
-  MenuContainer
+  MenuContainer,
+  Tooltip
 } from '@patternfly/react-core';
 
 import {
@@ -57,6 +58,8 @@ import FileUpload from './FileUpload';
 
 import { conversionProfile, conversionProfileDisplay, equivalentConversionProfiles, creationDefault, defaultConversionProfiles, getConversionProfileDisplay } from '@/utils/conversionProfiles';
 import { convertFilesToMarkdownWithOptions } from './ConversionUtils';
+
+import { useTimer } from './Timer';
 
 import WarningIcon from '@patternfly/react-icons/dist/esm/icons/exclamation-triangle-icon';
 import CheckCircleIcon from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
@@ -813,7 +816,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
           abortControllerRef,
           () => false,
           addConvertedResource,
-          (message: string) => {alert(message)}
+          (message: string) => {alert(message)},
+          start,
+          reset
         )
       } else {
         convertingGroups.current.push(...toConvertGroups);
@@ -898,6 +903,10 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
 
     setFileActionsDropdownOpen(isOpen)
   }
+
+  // ------ TIMER ------
+
+  const { elapsed, isRunning, start, pause, reset } = useTimer();
 
   return (
     <>
@@ -1130,11 +1139,35 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                     <Tr key={index} className='conversion-required-row fat-row'>
                       <Td>
                         {convertingFileNames.includes(resource.file.name) && (convertingFileNames[0] === resource.file.name ? (
-                          <Spinner diameter="18px" aria-label={`Converting ${resource.file.name}`} />
+                          <Tooltip
+                            content={
+                              <div>
+                                Converting for {Math.floor(elapsed / 1000)} sec
+                              </div>
+                            }
+                            entryDelay={0}
+                            exitDelay={150}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Spinner diameter="18px" aria-label={`Converting ${resource.file.name}`} />
+                            </div>
+                          </Tooltip>
                         ) : (
-                          <Icon size='lg'>
-                            <PendingIcon color='#004D99' />
-                          </Icon>
+                          <Tooltip
+                            content={
+                              <div>
+                                Item in queue
+                              </div>
+                            }
+                            entryDelay={0}
+                            exitDelay={150}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Icon size='lg'>
+                                <PendingIcon color='#004D99' />
+                              </Icon>
+                            </div>
+                          </Tooltip>
                         ))}
                       </Td>
                       <Td select={{
