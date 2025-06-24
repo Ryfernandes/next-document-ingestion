@@ -160,9 +160,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
         numberSelected > 0
           ? Array.from(new Array(numberSelected + 1), (_x, i) => i + recentSelectedRowIndex)
           : Array.from(new Array(Math.abs(numberSelected) + 1), (_x, i) => i + rowIndex);
-      intermediateIndexes.forEach((index) => setResourceSelected([...conversionRequiredResources, ...uploadCompleteResources][index], isSelecting, index < conversionRequiredResources.length ? 'conversion-required' : 'upload-complete'));
+      intermediateIndexes.forEach((index) => setResourceSelected([...shownConversionRequiredResources, ...shownUploadCompleteResources][index], isSelecting, index < shownConversionRequiredResources.length ? 'conversion-required' : 'upload-complete'));
     } else {
-      setResourceSelected(resource, isSelecting, rowIndex < conversionRequiredResources.length ? 'conversion-required' : 'upload-complete');
+      setResourceSelected(resource, isSelecting, rowIndex < shownConversionRequiredResources.length ? 'conversion-required' : 'upload-complete');
     }
     setRecentSelectedRowIndex(rowIndex);
   };
@@ -193,6 +193,8 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   }
 
   const onUpload = (toOverwrite: File[], toUpload: File[]) => {
+    setRecentSelectedRowIndex(null);
+
     const conversionRequiredClosed = conversionRequiredResources.length == 0;
     const uploadCompleteClosed = uploadCompleteResources.length == 0;
 
@@ -666,6 +668,10 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const [selectFilesDropdownOpen, setSelectFilesDropdownOpen] = useState(false);
   const [fileActionsDropdownOpen, setFileActionsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setRecentSelectedRowIndex(null);
+  }, [searchQuery]);
 
   useEffect(() => {
     setShownConversionRequiredResources(conversionRequiredResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase())));
@@ -1236,9 +1242,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                     <Tr key={index} className="upload-complete-row fat-row">
                       <Td/>
                       <Td select={{
-                        rowIndex: conversionRequiredResources.length + index,
+                        rowIndex: shownConversionRequiredResources.length + index,
                         isSelected: isResourceSelected(resource),
-                        onSelect: (_event, isSelecting) => onSelectResource(resource, conversionRequiredResources.length + index, isSelecting),
+                        onSelect: (_event, isSelecting) => onSelectResource(resource, shownConversionRequiredResources.length + index, isSelecting),
                       }}/>
                       <Td>{resource.file.name}</Td>
                       <Td>
