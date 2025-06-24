@@ -73,6 +73,7 @@ import PlusIcon from '@patternfly/react-icons/dist/esm/icons/plus-icon';
 import PendingIcon from '@patternfly/react-icons/dist/esm/icons/pending-icon';
 
 import { Spinner } from '@patternfly/react-core'
+import { abort } from 'process';
 
 type Resource = {
   datetimeUploaded: Date;
@@ -358,6 +359,8 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     }
   }
 
+  const abortControllerRef = useRef<AbortController>(new AbortController());
+
   const handleFileActionSelect = (resource: Resource, value: string) => {
     if (value === "delete") {
       removeResources([resource]);
@@ -402,6 +405,17 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
         setSelectedUploadCompleteFileNames((prev) => prev.filter((fileName) => fileName !== resource.file.name));
         setSelectedConversionRequiredFileNames((prev) => [...prev, newResource.file.name]);
       }
+    }
+
+    if (value === "cancel-conversion") {
+      if (convertingFileNames[0] == resource.file.name) {
+        convertingGroups.current.shift();
+        abortControllerRef.current.abort();
+      } else {
+        convertingGroups.current = convertingGroups.current.filter((group) => group.resource.file.name !== resource.file.name);
+      }
+
+      setConvertingFileNames(convertingGroups.current.map((group) => group.resource.file.name));
     }
 
     setOpenFileActionsDropdown(null);
@@ -741,6 +755,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
 
   const numDeleteableFiles = selectedConversionRequiredFileNames.filter(name => !convertingFileNames.includes(name)).length + selectedUploadCompleteFileNames.length;
   const numConvertableFiles = selectedConversionRequiredFileNames.filter(name => !convertingFileNames.includes(name)).length;
+  const numConvertingFiles = selectedConversionRequiredFileNames.filter(name => convertingFileNames.includes(name)).length;
 
   const selectedConversionRequiredFileNamesRef = useRef<string[]>(selectedConversionRequiredFileNames);
   const conversionRequriedLengthRef = useRef<number>(0);
@@ -795,6 +810,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   
         await convertFilesToMarkdownWithOptions(
           convertingGroups,
+          abortControllerRef,
           () => false,
           addConvertedResource,
           (message: string) => {alert(message)}
@@ -811,6 +827,21 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     onConvert(conversionRequiredResources.filter((resource) => selectedConversionRequiredFileNames.includes(resource.file.name)));
   }
 
+  const handleCancelConversion = () => {
+    setFileActionsDropdownOpen(false);
+
+    const toCancelNames = selectedConversionRequiredFileNames.filter(name => convertingFileNames.includes(name));
+    const frontName = convertingGroups.current[0]?.resource.file.name;
+
+    convertingGroups.current = convertingGroups.current.filter((group) => !toCancelNames.includes(group.resource.file.name));
+
+    if (frontName && toCancelNames.includes(frontName)) {
+      abortControllerRef.current.abort();
+    }
+
+    setConvertingFileNames(convertingGroups.current.map((group) => group.resource.file.name));
+  }
+
   // ------ VIEW -------
 
   const viewFileInNewTab = (file: File) => {
@@ -823,6 +854,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   const selectionConvertable = selectedConversionRequiredFileNames.filter(name => !convertingFileNames.includes(name)).length > 0;
   const revertableSelection = uploadCompleteResources.filter((resource) => resource.originalFile != null && selectedUploadCompleteFileNames.includes(resource.file.name));
   const selectionRevertable = revertableSelection.length > 0;
+  const selectionConverting = numConvertingFiles > 0;
 
   const handleRevert = () => {
     setFileActionsDropdownOpen(false);
@@ -1014,6 +1046,13 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                                 Convert files ({numConvertableFiles})
                               </MenuItem>
                               <MenuItem
+                                itemId="cancel-conversion"
+                                onClick={handleCancelConversion}
+                                isDisabled={!selectionConverting}
+                              >
+                                Cancel conversion ({numConvertingFiles})
+                              </MenuItem>
+                              <MenuItem
                                 itemId="revert-conversion"
                                 onClick={handleRevert}
                                 isDisabled={!selectionRevertable}
@@ -1123,7 +1162,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                           onSelect={() => {setOpenProfileDropdown(resource.file.name)}}
                           onOpenChange={(isOpen: boolean) => {setOpenProfileDropdown(isOpen ? resource.file.name : null)}}
                           toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle className="conversion-profile-menu" ref={toggleRef} onClick={() => onToggleClick(resource.file.name)} isExpanded={resource.file.name === openProfileDropdown}>
+                            <MenuToggle className="conversion-profile-menu" isDisabled={convertingFileNames.includes(resource.file.name)} ref={toggleRef} onClick={() => onToggleClick(resource.file.name)} isExpanded={resource.file.name === openProfileDropdown}>
                               {resource.conversionProfile}
                             </MenuToggle>
                           )}
@@ -1175,15 +1214,25 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                             >
                               View file
                             </DropdownItem>
-                            <DropdownItem
-                              value={1}
-                              key="convert"
-                              onClick={() => {handleFileActionSelect(resource, "convert")}}
-                              isSelected={false}
-                              isDisabled={convertingFileNames.includes(resource.file.name)}
-                            >
-                              Convert file
-                            </DropdownItem>
+                            {convertingFileNames.includes(resource.file.name) ? (
+                              <DropdownItem
+                                value={1}
+                                key="cancel-conversion"
+                                onClick={() => {handleFileActionSelect(resource, "cancel-conversion")}}
+                                isSelected={false}
+                              >
+                                Cancel conversion
+                              </DropdownItem>
+                            ) : (
+                              <DropdownItem
+                                value={1}
+                                key="convert"
+                                onClick={() => {handleFileActionSelect(resource, "convert")}}
+                                isSelected={false}
+                              >
+                                Convert file
+                              </DropdownItem>
+                            )}
                             <Divider component="li" key="separator" />
                             <DropdownItem
                                 value={3}
