@@ -70,6 +70,7 @@ import FilePowerpoint from '@patternfly/react-icons/dist/esm/icons/outlined-file
 import FileWord from '@patternfly/react-icons/dist/esm/icons/outlined-file-word-icon';
 import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 import PlusIcon from '@patternfly/react-icons/dist/esm/icons/plus-icon';
+import PendingIcon from '@patternfly/react-icons/dist/esm/icons/pending-icon';
 
 import { Spinner } from '@patternfly/react-core'
 
@@ -1089,9 +1090,13 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                   {isGroupExpanded('conversion-required') && shownConversionRequiredResources.map((resource, index) => (
                     <Tr key={index} className='conversion-required-row fat-row'>
                       <Td>
-                        {convertingFileNames.includes(resource.file.name) && (
+                        {convertingFileNames.includes(resource.file.name) && (convertingFileNames[0] === resource.file.name ? (
                           <Spinner diameter="18px" aria-label={`Converting ${resource.file.name}`} />
-                        )}
+                        ) : (
+                          <Icon size='lg'>
+                            <PendingIcon color='#004D99' />
+                          </Icon>
+                        ))}
                       </Td>
                       <Td select={{
                           rowIndex: index,
