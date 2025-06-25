@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const body: ConvertRequestBody = await request.json();
 
   // 2. Read the IL_FILE_CONVERSION_SERVICE from .env
-  const baseUrl = process.env.IL_FILE_CONVERSION_SERVICE || 'http://doclingserve:5001';
+  const baseUrl = process.env.NEXT_PUBLIC_IL_FILE_CONVERSION_SERVICE || 'http://doclingserve:5001';
 
   // 3. Check the health of the conversion service before proceeding
   try {
