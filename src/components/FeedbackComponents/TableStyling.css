@@ -1,0 +1,105 @@
+.pf-v6-c-table .conversion-required-row, .upload-complete-row {
+  border-right: 1px solid #c7c7c7;
+  border-left: 1px solid #c7c7c7;
+  border-top: none;
+  border-bottom: 1px solid #c7c7c7;
+}
+
+.pf-v6-c-table .conversion-required-header {
+  border: 1px solid #FFCC17;
+  border-left: 4px solid #FFCC17;
+  background-color: #ffcd171a;
+}
+
+.pf-v6-c-table .upload-complete-header {
+  border: 1px solid #3D7317;
+  border-left: 4px solid #3D7317;
+  background-color: #3D73171a;
+}
+
+.pf-v6-c-table .fat-row Td, Th {
+  height: 4.5rem;
+  vertical-align: middle;
+}
+
+.conversion-required-header .pf-v6-c-table__check input {
+  transform: translateY(-6px)
+}
+
+.upload-complete-header .pf-v6-c-table__check input {
+  transform: translateY(-6px)
+}
+
+.pf-v6-c-table .conversion-profile-menu {
+  width: 95%;
+}
+
+.pf-v6-c-table .conversion-profile-menu-container {
+  min-width: 225px;
+}
+
+.pf-v6-c-menu__item.danger-item {
+  color: #B1380B;
+}
+
+.pf-m-disabled .pf-v6-c-menu__item.danger-item {
+  color: #a3a3a3;
+}
+
+.pf-v6-c-table .conversion-required-title {
+  min-width: 265px;
+}
+
+.pf-v6-c-table .upload-complete-title {
+  min-width: 265px;
+}
+
+.pf-v6-c-table .row-end-menu-container {
+  width: 80px;
+}
+
+.pf-v6-c-table__td.spinner-container {
+  width: 30px;
+}
+
+.select-files-toggle .pf-v6-c-menu-toggle__text {
+  min-width: 70px;
+}
+
+.conversion-profile-dropdown {
+  max-height: 225px;
+  overflow-y: auto;
+}
+
+.pf-v6-c-menu.pf-m-drilldown .pf-v6-c-menu__list.conversion-profile-dropdown {
+  max-height: 225px;
+  overflow-y: auto;
+}
+
+.pf-v6-c-menu.no-gap .pf-v6-c-menu__content {
+  gap: 0;
+}
+
+.pf-v6-c-tabs__item.pf-m-current.conversion-required-tab-title > .pf-v6-c-tabs__link::after {
+  border-bottom: 4px solid #FFCC17;
+}
+
+.pf-v6-c-tabs__item.conversion-required-tab-title button {
+  padding: 1rem;
+}
+
+.pf-v6-c-tabs__item.pf-m-current.conversion-required-tab-title button {
+  background-color: #ffcd171a;
+}
+
+.pf-v6-c-tabs__item.pf-m-current.upload-complete-tab-title > .pf-v6-c-tabs__link::after {
+  border-bottom: 4px solid #3D7317;
+}
+
+.pf-v6-c-tabs__item.upload-complete-tab-title button {
+  padding: 1rem;
+}
+
+.pf-v6-c-tabs__item.pf-m-current.upload-complete-tab-title button {
+  background-color: #3D73171a;
+}

@@ -23,6 +23,7 @@ export type conversionProfile = {
 export type conversionProfileDisplay = {
   alias: string;
   image_export_mode: string;
+  pipeline: string;
   vlm: string;
   ocr_engine: string;
   pdf_backend: string;
@@ -49,6 +50,7 @@ export const getConversionProfileDisplay = (profile: conversionProfile): convers
   return {
     alias: profile.alias,
     image_export_mode: profile.image_export_mode.charAt(0).toUpperCase() + profile.image_export_mode.slice(1),
+    pipeline: profile.pipeline === "standard" ? "Standard" : "VLM",
     vlm: profile.pipeline === "vlm" ? "ON" : "OFF",
     ocr_engine: ocrEngineTranslations[profile.ocr_engine] || profile.ocr_engine,
     pdf_backend: profile.pdf_backend,

@@ -1,0 +1,46 @@
+.pf-v6-c-menu.inset-menu {
+  box-shadow: none;
+  border: 1px solid #c7c7c7;
+  width: 300px;
+}
+
+.settings-view-container {
+  align-self: start;
+  padding: 1rem 2rem 1rem 2rem;
+  border: 1px solid #c7c7c7;
+  border-radius: 0.5rem;
+  max-height: 550px;
+  overflow-y: auto;
+}
+
+.green-border {
+  border: 1px solid #3D7317;
+}
+
+.blue-border {
+  border: 1px solid #0066CC;
+}
+
+.pf-v6-c-menu-toggle.manage-conversion-profiles-dropdown {
+  width: 100%;
+  transition: none;
+}
+
+.new-option {
+  margin-top: 0.5rem;
+}
+
+.pf-v6-l-flex.conversion-profiles-header {
+  padding: 0.5rem 1.5rem 0.5rem 1.5rem;
+  border-bottom: 1px solid #c7c7c7;
+  margin-bottom: 0.5rem;
+}
+
+.green-icon {
+  color: #3D7317;
+}
+
+.conversion-profiles-footer {
+  border-top: 1px solid #c7c7c7;
+  margin-top: 0.5rem;
+}
