@@ -39,7 +39,8 @@ export async function POST(request: Request) {
     }
   } catch (error: unknown) {
     console.error('Error conversion service health check:', error);
-    return NextResponse.json({ error: 'Conversion service is offline, only markdown files accepted.' }, { status: 503 });
+    //!!! HERE
+    return NextResponse.json({ error: `Conversion service is offline, only markdown files accepted. Used: ${process.env.IL_FILE_CONVERSION_SERVICE || 'http://doclingserve:5001'}` }, { status: 503 });
   }
 
   // 4. Service is healthy, proceed with md conversion

@@ -10,6 +10,7 @@
   "dependencies": {
     "@patternfly/react-component-groups": "^6.2.1",
     "@patternfly/react-core": "^6.2.2",
+    "dotenv": "^16.5.0",
     "jszip": "^3.10.1",
     "next": "15.3.2"
   },
