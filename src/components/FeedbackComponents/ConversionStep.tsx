@@ -5,6 +5,8 @@
 import './TableStyling.css';
 import './ModalStyling.css';
 
+import JSZip from 'jszip';
+
 import {
   Flex,
   FlexItem,
@@ -355,6 +357,18 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
         viewFileInNewTab(resource.originalFile);
       } else {
         viewFileInNewTab(resource.file);
+      }
+    }
+
+    if (value == "download") {
+      downloadFile(resource.file);
+    }
+
+    if (value === "download-original") {
+      if (resource.originalFile) {
+        downloadFile(resource.originalFile);
+      } else {
+        downloadFile(resource.file);
       }
     }
 
@@ -817,6 +831,60 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     window.open(fileURL, '_blank')?.focus();
   }
 
+  // ------ DOWNLOAD ------
+
+  const handleDownloadFiles = () => {
+    downloadFilesAsZip(
+      [...conversionRequiredResources, ...uploadCompleteResources].filter((resource) => selectedConversionRequiredFileNames.includes(resource.file.name) || selectedUploadCompleteFileNames.includes(resource.file.name)).map((resource) => resource.file),
+      'documents.zip'
+    );
+    setFileActionsDropdownOpen(false);
+  }
+
+  const handleDownloadOriginalFiles = () => {
+    downloadFilesAsZip(
+      revertableSelection.map((resource) => resource.originalFile || resource.file),
+      'original_documents.zip'
+    );
+    setFileActionsDropdownOpen(false);
+  }
+
+  const downloadFile = (file: File) => {
+    const fileURL = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = fileURL;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(fileURL);
+  };
+
+  const downloadFilesAsZip = async (files: File[], zipName = 'ingested_documents.zip') => {
+    if (files.length === 1) {
+      downloadFile(files[0]);
+      return;
+    }
+
+    const zip = new JSZip();
+  
+    for (const file of files) {
+      const fileData = await file.arrayBuffer();
+      zip.file(file.name, fileData);
+    }
+  
+    const blob = await zip.generateAsync({ type: 'blob' });
+  
+    const link = document.createElement('a');
+    const blobURL = URL.createObjectURL(blob);
+    link.href = blobURL;
+    link.download = zipName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobURL);
+  };
+
   // ------ TOOLBAR DISABLES ------
   
   const selectionConvertable = selectedConversionRequiredFileNames.filter(name => !convertingFileNames.includes(name)).length > 0;
@@ -910,7 +978,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
         setPage(Math.max(1, Math.ceil(shownUploadCompleteResourcesLength / perPage)));
       }
     }
-  }, [shownConversionRequiredResourcesLength, shownUploadCompleteResourcesLength]);
+  }, [shownConversionRequiredResourcesLength, shownUploadCompleteResourcesLength, activeTabKey]);
 
   return (
     <>
@@ -1073,6 +1141,19 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                                   isDisabled={!selectionRevertable}
                                 >
                                   Revert conversion ({revertableSelection.length})
+                                </MenuItem>
+                                <MenuItem
+                                  itemId="download-files"
+                                  onClick={handleDownloadFiles}
+                                >
+                                  Download files ({numFilesSelected})
+                                </MenuItem>
+                                <MenuItem
+                                  itemId="download-original-files"
+                                  onClick={handleDownloadOriginalFiles}
+                                  isDisabled={revertableSelection.length === 0}
+                                >
+                                  Download original files ({revertableSelection.length})
                                 </MenuItem>
                                 <MenuItem
                                   itemId="delete-files"
@@ -1274,9 +1355,17 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                               >
                                 View file
                               </DropdownItem>
+                              <DropdownItem
+                                value={1}
+                                key="download"
+                                onClick={() => {handleFileActionSelect(resource, "download")}}
+                                isSelected={false}
+                              >
+                                Download file
+                              </DropdownItem>
                               {convertingFileNames.includes(resource.file.name) ? (
                                 <DropdownItem
-                                  value={1}
+                                  value={2}
                                   key="cancel-conversion"
                                   onClick={() => {handleFileActionSelect(resource, "cancel-conversion")}}
                                   isSelected={false}
@@ -1285,7 +1374,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                                 </DropdownItem>
                               ) : (
                                 <DropdownItem
-                                  value={1}
+                                  value={2}
                                   key="convert"
                                   onClick={() => {handleFileActionSelect(resource, "convert")}}
                                   isSelected={false}
@@ -1400,6 +1489,14 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                             </DropdownItem>
                             <DropdownItem
                               value={1}
+                              key="download"
+                              onClick={() => {handleFileActionSelect(resource, "download")}}
+                              isSelected={false}
+                            >
+                              Download file
+                            </DropdownItem>
+                            <DropdownItem
+                              value={2}
                               key="view-original"
                               onClick={() => {handleFileActionSelect(resource, "view-original")}}
                               isSelected={false}
@@ -1408,7 +1505,16 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                               View original file
                             </DropdownItem>
                             <DropdownItem
-                              value={2}
+                              value={3}
+                              key="download-original"
+                              onClick={() => {handleFileActionSelect(resource, "download-original")}}
+                              isSelected={false}
+                              isDisabled={resource.originalFile == null}
+                            >
+                              Download original file
+                            </DropdownItem>
+                            <DropdownItem
+                              value={4}
                               key="revert-conversion"
                               onClick={() => {handleFileActionSelect(resource, "revert")}}
                               isSelected={false}
@@ -1418,7 +1524,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                             </DropdownItem>
                             <Divider component="li" key="separator" />
                             <DropdownItem
-                                value={3}
+                                value={5}
                                 key="delete"
                                 onClick={() => {handleFileActionSelect(resource, "delete")}}
                                 className="danger-item"
