@@ -39,7 +39,11 @@ import {
   TextArea,
   DrilldownMenu,
   MenuContainer,
-  Tooltip
+  Tooltip,
+  Tabs,
+  Tab,
+  TabTitleText,
+  Pagination
 } from '@patternfly/react-core';
 
 import {
@@ -98,21 +102,12 @@ type ConversionStepProps = {
 // Later, add workspace file support
 
 const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
-  const [page, setPage] = useState(1);
   const [showConversionProfiles, setShowConversionProfiles] = useState(false);
   const [showDocumentation, setShowDocumentation] = useState(false);
 
   const workspaceFiles: File[] = [];
 
   // ------ CARD THINGS ------
-
-  const [expandedGroupNames, setExpandedGroupNames] = useState<string[]>([]);
-  const setGroupExpanded = (group: string, isExpanding = true) =>
-    setExpandedGroupNames((prevExpanded) => {
-      const otherExpandedGroupNames = prevExpanded.filter((groupName) => groupName !== group);
-      return isExpanding ? [...otherExpandedGroupNames, group] : otherExpandedGroupNames;
-    });
-  const isGroupExpanded = (group: string) => expandedGroupNames.includes(group);
 
   const [conversionRequiredResources, setConversionRequiredResources] = useState<Resource[]>([]);
   const [uploadCompleteResources, setUploadCompleteResources] = useState<Resource[]>([]);
@@ -211,6 +206,12 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
       (resource) => !toOverwrite.some(fileToRemove => getFileStem(fileToRemove) === getFileStem(resource.file))
     );
 
+    if ((conversionRequiredClosed && newConversionRequiredResources.length === 0) && (!uploadCompleteClosed || [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown').length > 0)) {
+      setActiveTabKey('upload-complete');
+    } else if ((uploadCompleteClosed && newUploadCompleteResources.length === 0) && (!conversionRequiredClosed || [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown').length > 0)) {
+      setActiveTabKey('conversion-required');
+    }
+
     Promise.resolve().then(() => {
       setConversionRequiredResources(() => {
         const selectFiles = [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown')
@@ -239,30 +240,6 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
   
         return [...newUploadCompleteResources, ...newResouces];
       })
-    }).then(() => {
-      let closeGroup: string[] = []
-
-      if (!conversionRequiredClosed && newConversionRequiredResources.length === 0 && [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown').length == 0) {
-        closeGroup.push("conversion-required");
-      }
-
-      if (!uploadCompleteClosed && newUploadCompleteResources.length === 0 && [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown').length == 0) {
-        closeGroup.push("upload-complete");
-      }
-
-      setExpandedGroupNames((prev) => prev.filter((group) => !closeGroup.includes(group)));
-    }).then(() => {
-      let openGroup: string[] = []
-
-      if (conversionRequiredClosed && [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown').length > 0) {
-        openGroup.push("conversion-required");
-      }
-
-      if (uploadCompleteClosed && [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown').length > 0) {
-        openGroup.push("upload-complete");
-      }
-
-      setExpandedGroupNames((prev) => [...prev, ...openGroup]);
     })
   }
 
@@ -393,12 +370,8 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
         "conversionProfile": resource.conversionProfile
       }
 
-      if (uploadCompleteLengthRef.current === 1) {
-        setExpandedGroupNames((prev) => prev.filter((group) => group !== "upload-complete"));
-      }
-  
-      if (conversionRequriedLengthRef.current === 0) {
-        setExpandedGroupNames((prev) => [...prev, "conversion-required"]);
+      if (uploadCompleteLengthRef.current == 1) {
+        setActiveTabKey('conversion-required');
       }
 
       setUploadCompleteResources((prev) => prev.filter((res) => res.file.name !== resource.file.name));
@@ -441,17 +414,11 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
       (fileName) => !resources.some(resourceToRemove => getFileStem(resourceToRemove.file) === getFileStem({ name: fileName, type: 'text/markdown', size: 0 } as File))
     );
 
-    let closeGroup: string[] = []
-
-    if (newConversionRequiredResources.length !== conversionRequiredResources.length && newConversionRequiredResources.length === 0) {
-      closeGroup.push("conversion-required");
+    if (newConversionRequiredResources.length === 0 && newUploadCompleteResources.length > 0) {
+      setActiveTabKey('upload-complete');
+    } else if (newUploadCompleteResources.length === 0 && newConversionRequiredResources.length > 0) {
+      setActiveTabKey('conversion-required');
     }
-
-    if (newUploadCompleteResources.length !== uploadCompleteResources.length && newUploadCompleteResources.length === 0) {
-      closeGroup.push("upload-complete");
-    }
-
-    setExpandedGroupNames((prev) => prev.filter((group) => !closeGroup.includes(group)));
 
     setConversionRequiredResources(newConversionRequiredResources);
     setUploadCompleteResources(newUploadCompleteResources);
@@ -779,11 +746,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
 
   const addConvertedResource = (resource: Resource) => {
     if (conversionRequriedLengthRef.current === 1) {
-      setExpandedGroupNames((prev) => prev.filter((group) => group !== "conversion-required"));
-    }
-
-    if (uploadCompleteLengthRef.current === 0) {
-      setExpandedGroupNames((prev) => [...prev, "upload-complete"]);
+      setActiveTabKey('upload-complete');
     }
 
     setConversionRequiredResources((prev) => prev.filter((res) => res.file.name !== resource.originalFile?.name));
@@ -865,11 +828,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
     setFileActionsDropdownOpen(false);
 
     if (revertableSelection.length === uploadCompleteLengthRef.current) {
-      setExpandedGroupNames((prev) => prev.filter((group) => group !== "upload-complete"));
-    }
-
-    if (conversionRequriedLengthRef.current === 0) {
-      setExpandedGroupNames((prev) => [...prev, "conversion-required"]);
+      setActiveTabKey('conversion-required');
     }
 
     for (const resource of revertableSelection) {
@@ -908,6 +867,51 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
 
   const { elapsed, isRunning, start, pause, reset } = useTimer();
 
+  // ------ TABS ------
+
+  const [activeTabKey, setActiveTabKey] = useState<string | number>('conversion-required');
+
+  const handleTabClick = (
+    event: React.MouseEvent | React.KeyboardEvent | MouseEvent,
+    tabIndex: string | number
+  ) => {
+    setActiveTabKey(tabIndex);
+    setRecentSelectedRowIndex(null);
+  }
+
+  // ------ PAGINATION ------
+
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+
+  const onSetPage = (_event: React.MouseEvent | React.KeyboardEvent | MouseEvent, newPage: number) => {
+    setPage(newPage);
+  }
+
+  const onPerPageSelect = (
+    _event: React.MouseEvent | React.KeyboardEvent | MouseEvent,
+    newPerPage: number,
+    newPage: number
+  ) => {
+    setPerPage(newPerPage);
+    setPage(Math.max(1, newPage));
+  };
+
+  const shownConversionRequiredResourcesLength = shownConversionRequiredResources.length;
+  const shownUploadCompleteResourcesLength = shownUploadCompleteResources.length;
+
+  useEffect(() => {
+    if (activeTabKey === 'conversion-required') {
+      if ((page - 1) * perPage >= shownConversionRequiredResourcesLength) {
+        setPage(Math.max(1, Math.ceil(shownConversionRequiredResourcesLength / perPage)));
+      }
+    } else if (activeTabKey === 'upload-complete') {
+      if ((page - 1) * perPage >= shownUploadCompleteResourcesLength) {
+        setPage(Math.max(1, Math.ceil(shownUploadCompleteResourcesLength / perPage)));
+      }
+    }
+  }, [shownConversionRequiredResourcesLength, shownUploadCompleteResourcesLength]);
+
   return (
     <>
       <ConversionHeader openConversionProfiles={handleConversionProfilesOpen} setShowDocumentation={setShowDocumentation} />
@@ -932,167 +936,511 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
               </Flex>
 
               <Toolbar style={{ marginTop: '2.5rem' }}>
-                <ToolbarContent>
-                  <ToolbarItem key="checkbox">
-                    <Dropdown
-                      isOpen={selectFilesDropdownOpen}
-                      onSelect={() => setSelectFilesDropdownOpen(true)}
-                      onOpenChange={(isOpen: boolean) => setSelectFilesDropdownOpen(isOpen)}
-                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                        <MenuToggle
-                          className="select-files-toggle"
-                          ref={toggleRef}
-                          onClick={() => setSelectFilesDropdownOpen(!selectFilesDropdownOpen)}
-                          isExpanded={selectFilesDropdownOpen}
-                          splitButtonItems={[
-                            <MenuToggleCheckbox 
-                              key="split-button-checkbox" 
-                              id="split-button-checkbox"
-                              onChange={(isSelecting) => selectAllFiles(isSelecting, 'all')}
-                              isChecked={numFilesSelected == 0 ? false : numFilesSelected === totalFiles ? true : null}
-                            />
-                          ]}
-                        >
-                          {numFilesSelected} selected
-                        </MenuToggle>
-                      )}
-                      shouldFocusToggleOnSelect
-                    >
-                      <DropdownList>
-                        <DropdownItem
-                          value={0}
-                          key="select-none"
-                          onClick={() => selectAllFiles(false, 'all')}
-                        >
-                          Select none (0 items)
-                        </DropdownItem>
-                        <DropdownItem
-                          value={1}
-                          key="select-all"
-                          onClick={() => selectAllFiles(true, 'all')}
-                        >
-                          Select all ({totalFiles} items)
-                        </DropdownItem>
-                      </DropdownList>
-                    </Dropdown>
-                  </ToolbarItem>
-                  <ToolbarItem key="search">
-                    <SearchInput 
-                      placeholder="Find by name"
-                      value={searchQuery}
-                      onChange={(_event, value) => setSearchQuery(value)}
-                      onClear={() => setSearchQuery('')}
-                    />
-                  </ToolbarItem>
-                  <ToolbarItem key="convert-button">
-                    <Button
-                      variant="primary"
-                      isDisabled={!selectionConvertable}
-                      onClick={handleConvert}
-                    >
-                      Convert
-                    </Button>
-                  </ToolbarItem>
-                  <ToolbarItem key="actions-menu">
-                    <MenuContainer
-                      isOpen={fileActionsDropdownOpen}
-                      onOpenChange={(isOpen: boolean) => handleActionsToggle(isOpen)}
-                      menu={
-                        <Menu
-                          id="rootMenu"
-                          containsDrilldown
-                          drilldownItemPath={drilldownPath}
-                          drilledInMenus={menuDrilledIn}
-                          activeMenu={activeMenu}
-                          onDrillIn={drillIn}
-                          onDrillOut={drillOut}
-                          onGetMenuHeight={setHeight}
-                          ref={menuRef}
-                        >
-                          <MenuContent menuHeight={`${menuHeights[activeMenu]}px`}>
-                            <MenuList>
-                              <MenuItem
-                                itemId="group:set-conversion-profile"
-                                direction="down"
-                                isDisabled={!selectionConvertable}
-                                drilldownMenu={
-                                  <DrilldownMenu id="drilldownMenuStart">
-                                    <MenuItem itemId="group:set-conversion-profile_breadcrumb" direction="up">
-                                      Set conversion profile ({selectedConversionRequiredFileNames.length})
-                                    </MenuItem>
-                                    <Divider component="li" key="separator" />
-                                    <MenuList className="conversion-profile-dropdown">
-                                      {conversionProfiles.map((profile, idx) => (
-                                        <MenuItem
-                                          value={idx}
-                                          key={idx}
-                                          itemId={`conversion-profile-${idx}`}
-                                          onClick={() => handleActionProfileSelect(profile)}
-                                        >
-                                          {profile.alias}
-                                        </MenuItem>
-                                      ))}
-                                    </MenuList>
-                                    <Divider component="li" key="separator-2" />
-                                    <MenuItem
-                                      value={conversionProfiles.length}
-                                      key="create"
-                                      itemId='create-conversion-profile'
-                                      onClick={() => handleConversionProfilesOpen(true)}
-                                    >
-                                      Create conversion profile
-                                    </MenuItem>
-                                  </DrilldownMenu>
-                                }
-                              >
-                                Set conversion profile ({numConvertableFiles})
-                              </MenuItem>
-                              <MenuItem
-                                itemId="convert-files"
-                                onClick={handleConvert}
-                                isDisabled={!selectionConvertable}
-                              >
-                                Convert files ({numConvertableFiles})
-                              </MenuItem>
-                              <MenuItem
-                                itemId="cancel-conversion"
-                                onClick={handleCancelConversion}
-                                isDisabled={!selectionConverting}
-                              >
-                                Cancel conversion ({numConvertingFiles})
-                              </MenuItem>
-                              <MenuItem
-                                itemId="revert-conversion"
-                                onClick={handleRevert}
-                                isDisabled={!selectionRevertable}
-                              >
-                                Revert conversion ({revertableSelection.length})
-                              </MenuItem>
-                              <MenuItem
-                                itemId="delete-files"
-                                className="danger-item"
-                                onClick={handleDeleteFiles}
-                                isDisabled={numDeleteableFiles === 0}
-                              >
-                                Delete files ({numDeleteableFiles})
-                              </MenuItem>
-                            </MenuList>
-                          </MenuContent>
-                        </Menu>
-                      }
-                      menuRef={menuRef}
-                      toggle={
-                        <MenuToggle isDisabled={numFilesSelected == 0} variant="secondary" ref={toggleRef} onClick={() => handleActionsToggle(!fileActionsDropdownOpen)} isExpanded={fileActionsDropdownOpen}>
-                          Actions
-                        </MenuToggle>
-                      }
-                      toggleRef={toggleRef}
-                    />
-                  </ToolbarItem>
-                </ToolbarContent>
+                <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ width: '100%', padding: '0 0.5rem'}}>
+                  <FlexItem>
+                    <ToolbarContent>
+                    <ToolbarItem key="checkbox">
+                      <Dropdown
+                        isOpen={selectFilesDropdownOpen}
+                        onSelect={() => setSelectFilesDropdownOpen(true)}
+                        onOpenChange={(isOpen: boolean) => setSelectFilesDropdownOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle
+                            className="select-files-toggle"
+                            ref={toggleRef}
+                            onClick={() => setSelectFilesDropdownOpen(!selectFilesDropdownOpen)}
+                            isExpanded={selectFilesDropdownOpen}
+                            splitButtonItems={[
+                              <MenuToggleCheckbox 
+                                key="split-button-checkbox" 
+                                id="split-button-checkbox"
+                                onChange={(isSelecting) => selectAllFiles(isSelecting, 'all')}
+                                isChecked={numFilesSelected == 0 ? false : numFilesSelected === totalFiles ? true : null}
+                              />
+                            ]}
+                          >
+                            {numFilesSelected} selected
+                          </MenuToggle>
+                        )}
+                        shouldFocusToggleOnSelect
+                      >
+                        <DropdownList>
+                          <DropdownItem
+                            value={0}
+                            key="select-none"
+                            onClick={() => selectAllFiles(false, 'all')}
+                          >
+                            Select none (0 items)
+                          </DropdownItem>
+                          <DropdownItem
+                            value={1}
+                            key="select-all"
+                            onClick={() => selectAllFiles(true, 'all')}
+                          >
+                            Select all ({totalFiles} items)
+                          </DropdownItem>
+                        </DropdownList>
+                      </Dropdown>
+                    </ToolbarItem>
+                    <ToolbarItem key="search">
+                      <SearchInput 
+                        placeholder="Find by name"
+                        value={searchQuery}
+                        onChange={(_event, value) => setSearchQuery(value)}
+                        onClear={() => setSearchQuery('')}
+                      />
+                    </ToolbarItem>
+                    <ToolbarItem key="convert-button">
+                      <Button
+                        variant="primary"
+                        isDisabled={!selectionConvertable}
+                        onClick={handleConvert}
+                      >
+                        Convert
+                      </Button>
+                    </ToolbarItem>
+                    <ToolbarItem key="actions-menu">
+                      <MenuContainer
+                        isOpen={fileActionsDropdownOpen}
+                        onOpenChange={(isOpen: boolean) => handleActionsToggle(isOpen)}
+                        menu={
+                          <Menu
+                            id="rootMenu"
+                            containsDrilldown
+                            drilldownItemPath={drilldownPath}
+                            drilledInMenus={menuDrilledIn}
+                            activeMenu={activeMenu}
+                            onDrillIn={drillIn}
+                            onDrillOut={drillOut}
+                            onGetMenuHeight={setHeight}
+                            ref={menuRef}
+                          >
+                            <MenuContent menuHeight={`${menuHeights[activeMenu]}px`}>
+                              <MenuList>
+                                <MenuItem
+                                  itemId="group:set-conversion-profile"
+                                  direction="down"
+                                  isDisabled={!selectionConvertable}
+                                  drilldownMenu={
+                                    <DrilldownMenu id="drilldownMenuStart">
+                                      <MenuItem itemId="group:set-conversion-profile_breadcrumb" direction="up">
+                                        Set conversion profile ({selectedConversionRequiredFileNames.length})
+                                      </MenuItem>
+                                      <Divider component="li" key="separator" />
+                                      <MenuList className="conversion-profile-dropdown">
+                                        {conversionProfiles.map((profile, idx) => (
+                                          <MenuItem
+                                            value={idx}
+                                            key={idx}
+                                            itemId={`conversion-profile-${idx}`}
+                                            onClick={() => handleActionProfileSelect(profile)}
+                                          >
+                                            {profile.alias}
+                                          </MenuItem>
+                                        ))}
+                                      </MenuList>
+                                      <Divider component="li" key="separator-2" />
+                                      <MenuItem
+                                        value={conversionProfiles.length}
+                                        key="create"
+                                        itemId='create-conversion-profile'
+                                        onClick={() => handleConversionProfilesOpen(true)}
+                                      >
+                                        Create conversion profile
+                                      </MenuItem>
+                                    </DrilldownMenu>
+                                  }
+                                >
+                                  Set conversion profile ({numConvertableFiles})
+                                </MenuItem>
+                                <MenuItem
+                                  itemId="convert-files"
+                                  onClick={handleConvert}
+                                  isDisabled={!selectionConvertable}
+                                >
+                                  Convert files ({numConvertableFiles})
+                                </MenuItem>
+                                <MenuItem
+                                  itemId="cancel-conversion"
+                                  onClick={handleCancelConversion}
+                                  isDisabled={!selectionConverting}
+                                >
+                                  Cancel conversion ({numConvertingFiles})
+                                </MenuItem>
+                                <MenuItem
+                                  itemId="revert-conversion"
+                                  onClick={handleRevert}
+                                  isDisabled={!selectionRevertable}
+                                >
+                                  Revert conversion ({revertableSelection.length})
+                                </MenuItem>
+                                <MenuItem
+                                  itemId="delete-files"
+                                  className="danger-item"
+                                  onClick={handleDeleteFiles}
+                                  isDisabled={numDeleteableFiles === 0}
+                                >
+                                  Delete files ({numDeleteableFiles})
+                                </MenuItem>
+                              </MenuList>
+                            </MenuContent>
+                          </Menu>
+                        }
+                        menuRef={menuRef}
+                        toggle={
+                          <MenuToggle isDisabled={numFilesSelected == 0} variant="secondary" ref={toggleRef} onClick={() => handleActionsToggle(!fileActionsDropdownOpen)} isExpanded={fileActionsDropdownOpen}>
+                            Actions
+                          </MenuToggle>
+                        }
+                        toggleRef={toggleRef}
+                      />
+                    </ToolbarItem>
+                    <ToolbarItem key='pagination'>
+                      <Pagination
+                        isCompact
+                        itemCount={activeTabKey === 'conversion-required' ? shownConversionRequiredResources.length : shownUploadCompleteResources.length}
+                        page={page}
+                        perPage={perPage}
+                        onSetPage={onSetPage}
+                        onPerPageSelect={onPerPageSelect}
+                        perPageOptions={[
+                          { title: '5', value: 5 },
+                          { title: '10', value: 10 },
+                          { title: '15', value: 15 },
+                          { title: '20', value: 20 }
+                        ]}
+                      />
+                    </ToolbarItem>
+                  </ToolbarContent>
+                </FlexItem>
+                </Flex>
               </Toolbar>
             </CardTitle>
             <CardBody>
+              <Tabs
+                activeKey={activeTabKey}
+                onSelect={handleTabClick}
+                aria-label='Resource type tabs'
+                role='region'
+              >
+                <Tab 
+                  className='conversion-required-tab-title'
+                  eventKey='conversion-required' 
+                  title={
+                    <TabTitleText>
+                      <Flex>
+                        <FlexItem>
+                          <Checkbox
+                            style={{ marginRight: '0.25rem', transform: 'translateY(2px)' }}
+                            id='select-all'
+                            isChecked={areAllConversionRequiredResourcesSelected && conversionRequiredResources.length > 0}
+                            onChange={(_event, isSelecting) => {
+                              selectAllFiles(isSelecting, 'conversion-required');
+                            }}
+                            onClick={(_event) => _event.stopPropagation()}
+                          />
+                        </FlexItem>
+                        <FlexItem>
+                          <Icon >
+                            <WarningIcon color="#FFCC17" />
+                          </Icon>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component='p' style={{ fontWeight: 'bold' }}>
+                            Conversion required
+                          </Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <Badge style={{ transform: 'translateY(-1px)' }} screenReaderText="Conversion Required">{conversionRequiredResources.length}</Badge>
+                        </FlexItem>
+                      </Flex>
+                    </TabTitleText>
+                  } 
+                  aria-label='Default content - conversion required'
+                >
+                  <Table>
+                    <Tbody>
+                    {shownConversionRequiredResources.slice((page - 1) * perPage, Math.min(page * perPage, shownConversionRequiredResources.length)).map((resource, index) => (
+                      <Tr key={index} className='conversion-required-row fat-row'>
+                        <Td className='spinner-container'>
+                          {convertingFileNames.includes(resource.file.name) && (convertingFileNames[0] === resource.file.name ? (
+                            <Tooltip
+                              content={
+                                <div>
+                                  Converting for {Math.floor(elapsed / 1000)} sec
+                                </div>
+                              }
+                              entryDelay={0}
+                              exitDelay={150}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                <Spinner diameter="18px" aria-label={`Converting ${resource.file.name}`} />
+                              </div>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip
+                              content={
+                                <div>
+                                  Item in queue
+                                </div>
+                              }
+                              entryDelay={0}
+                              exitDelay={150}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                <Icon size='lg'>
+                                  <PendingIcon color='#004D99' />
+                                </Icon>
+                              </div>
+                            </Tooltip>
+                          ))}
+                        </Td>
+                        <Td 
+                          select={{
+                            rowIndex: index,
+                            isSelected: isResourceSelected(resource),
+                            onSelect: (_event, isSelecting) => onSelectResource(resource, (page - 1) * perPage + index, isSelecting),
+                          }}
+                          style={{ paddingLeft: '1.5rem' }}
+                        />
+                        <Td>{resource.file.name}</Td>
+                        <Td>
+                          <Flex>
+                            <FlexItem>
+                              {getfileIcon(resource.file.type)}
+                            </FlexItem>
+                            <FlexItem>
+                              {fileTypeTranslations[resource.file.type] || 'Unknown'}
+                            </FlexItem>
+                          </Flex>
+                        </Td>
+                        <Td>{sizeForDisplay(resource.file.size)}</Td>
+                        <Td className='conversion-profile-menu-container'>
+                          <Dropdown
+                            className="no-gap"
+                            isOpen={resource.file.name === openProfileDropdown}
+                            onSelect={() => {setOpenProfileDropdown(resource.file.name)}}
+                            onOpenChange={(isOpen: boolean) => {setOpenProfileDropdown(isOpen ? resource.file.name : null)}}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle className="conversion-profile-menu" isDisabled={convertingFileNames.includes(resource.file.name)} ref={toggleRef} onClick={() => onToggleClick(resource.file.name)} isExpanded={resource.file.name === openProfileDropdown}>
+                                {resource.conversionProfile}
+                              </MenuToggle>
+                            )}
+                            ouiaId="ConversionProfileDropdown"
+                            shouldFocusToggleOnSelect
+                          >
+                            <DropdownList className="conversion-profile-dropdown">
+                              {conversionProfiles.map((profile, idx) => (
+                                <DropdownItem
+                                  value={idx}
+                                  key={idx}
+                                  onClick={() => handleProfileSelect(resource, profile)}
+                                  isSelected={resource.conversionProfile === profile.alias}
+                                >
+                                  {profile.alias}
+                                </DropdownItem>
+                              ))}
+                            </DropdownList>
+                            <DropdownList>
+                              <Divider component="li" key="separator" />
+                              <DropdownItem
+                                  value={conversionProfiles.length}
+                                  key="create"
+                                  onClick={() => handleConversionProfilesOpen(true)}
+                                >
+                                  Create conversion profile
+                                </DropdownItem>
+                            </DropdownList>
+                          </Dropdown>
+                        </Td>
+                        <Td className='row-end-menu-container'>
+                          <Dropdown
+                            popperProps={{ position: 'right' }}
+                            isOpen={resource.file.name === openFileActionsDropdown}
+                            onSelect={() => {setOpenFileActionsDropdown(resource.file.name)}}
+                            onOpenChange={(isOpen: boolean) => {setOpenFileActionsDropdown(isOpen ? resource.file.name : null)}}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle icon={<EllipsisVIcon />} variant="plain" ref={toggleRef} onClick={() => {onActionsToggleClick(resource.file.name)}} isExpanded={resource.file.name === openFileActionsDropdown}/>
+                            )}
+                            ouiaId="FileActionsDropdown"
+                            shouldFocusToggleOnSelect
+                          >
+                            <DropdownList>
+                              <DropdownItem
+                                value={0}
+                                key="view"
+                                onClick={() => {handleFileActionSelect(resource, "view")}}
+                                isSelected={false}
+                              >
+                                View file
+                              </DropdownItem>
+                              {convertingFileNames.includes(resource.file.name) ? (
+                                <DropdownItem
+                                  value={1}
+                                  key="cancel-conversion"
+                                  onClick={() => {handleFileActionSelect(resource, "cancel-conversion")}}
+                                  isSelected={false}
+                                >
+                                  Cancel conversion
+                                </DropdownItem>
+                              ) : (
+                                <DropdownItem
+                                  value={1}
+                                  key="convert"
+                                  onClick={() => {handleFileActionSelect(resource, "convert")}}
+                                  isSelected={false}
+                                >
+                                  Convert file
+                                </DropdownItem>
+                              )}
+                              <Divider component="li" key="separator" />
+                              <DropdownItem
+                                  value={3}
+                                  key="delete"
+                                  onClick={() => {handleFileActionSelect(resource, "delete")}}
+                                  className="danger-item"
+                                  isDisabled={convertingFileNames.includes(resource.file.name)}
+                                >
+                                  Delete file
+                                </DropdownItem>
+                            </DropdownList>
+                          </Dropdown>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+                  {shownConversionRequiredResources.length === 0 && (
+                    <Content component='p' style={{ marginLeft: '1.5rem', marginRight: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>
+                      No conversion required resources found. Please upload files to convert or adjust your search
+                    </Content>
+                  )}
+                </Tab>
+                <Tab 
+                  className='upload-complete-tab-title'
+                  eventKey='upload-complete' 
+                  title={
+                    <TabTitleText>
+                      <Flex>
+                      <FlexItem>
+                          <Checkbox
+                            style={{ marginRight: '0.25rem', transform: 'translateY(2px)' }}
+                            id='select-all'
+                            isChecked={areAllUploadCompleteResourcesSelected && uploadCompleteResources.length > 0}
+                            onChange={(_event, isSelecting) => {
+                              selectAllFiles(isSelecting, 'upload-complete');
+                            }}
+                            onClick={(_event) => _event.stopPropagation()}
+                          />
+                        </FlexItem>
+                        <FlexItem>
+                          <Icon >
+                            <CheckCircleIcon color="#3D7317" />
+                          </Icon>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component='p' style={{ fontWeight: 'bold' }}>
+                            Upload complete
+                          </Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <Badge style={{ transform: 'translateY(-1px)' }} screenReaderText="Upload complete">{uploadCompleteResources.length}</Badge>
+                        </FlexItem>
+                      </Flex>
+                    </TabTitleText>
+                  } 
+                  aria-label='Upload complete'
+                >
+                  <Table>
+                  <Tbody key='upload-complete'>
+                  {shownUploadCompleteResources.slice((page - 1) * perPage, Math.min(page * perPage, shownUploadCompleteResources.length)).map((resource, index) => (
+                    <Tr key={index} className="upload-complete-row fat-row">
+                      <Td/>
+                      <Td 
+                        style={{ paddingLeft: '1.5rem' }}
+                        select={{
+                          rowIndex: shownConversionRequiredResources.length + index,
+                          isSelected: isResourceSelected(resource),
+                          onSelect: (_event, isSelecting) => onSelectResource(resource, shownConversionRequiredResources.length + (page - 1) * perPage + index, isSelecting),
+                        }}
+                      />
+                      <Td>{resource.file.name}</Td>
+                      <Td>
+                        <Flex>
+                          <FlexItem>
+                            {getfileIcon(resource.file.type)}
+                          </FlexItem>
+                          <FlexItem>
+                            {fileTypeTranslations[resource.file.type] || 'Unknown'}
+                          </FlexItem>
+                        </Flex>
+                      </Td>
+                      <Td>{sizeForDisplay(resource.file.size)}</Td>
+                      <Td>{resource.datetimeConverted ? formatDate(resource.datetimeConverted, true): formatDate(resource.datetimeUploaded, false)}</Td>
+                      <Td className='row-end-menu-container'>
+                        <Dropdown
+                          popperProps={{ position: 'right' }}
+                          isOpen={resource.file.name === openFileActionsDropdown}
+                          onSelect={() => {setOpenFileActionsDropdown(resource.file.name)}}
+                          onOpenChange={(isOpen: boolean) => {setOpenFileActionsDropdown(isOpen ? resource.file.name : null)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle icon={<EllipsisVIcon />} variant="plain" ref={toggleRef} onClick={() => {onActionsToggleClick(resource.file.name)}} isExpanded={resource.file.name === openFileActionsDropdown}/>
+                          )}
+                          ouiaId="FileActionsDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            <DropdownItem
+                              value={0}
+                              key="view"
+                              onClick={() => {handleFileActionSelect(resource, "view")}}
+                              isSelected={false}
+                            >
+                              View file
+                            </DropdownItem>
+                            <DropdownItem
+                              value={1}
+                              key="view-original"
+                              onClick={() => {handleFileActionSelect(resource, "view-original")}}
+                              isSelected={false}
+                              isDisabled={resource.originalFile == null}
+                            >
+                              View original file
+                            </DropdownItem>
+                            <DropdownItem
+                              value={2}
+                              key="revert-conversion"
+                              onClick={() => {handleFileActionSelect(resource, "revert")}}
+                              isSelected={false}
+                              isDisabled={resource.originalFile == null}
+                            >
+                              Revert conversion
+                            </DropdownItem>
+                            <Divider component="li" key="separator" />
+                            <DropdownItem
+                                value={3}
+                                key="delete"
+                                onClick={() => {handleFileActionSelect(resource, "delete")}}
+                                className="danger-item"
+                              >
+                                Delete file
+                              </DropdownItem>
+                          </DropdownList>
+                        </Dropdown>
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+                    {shownUploadCompleteResources.length === 0 && (
+                      <Content component='p' style={{ marginLeft: '1.5rem', marginRight: '1.5rem', marginTop: '2rem', marginBottom: '1rem' }}>
+                        No upload complete resources found. Please upload files in markdown format, convert files in the conversion required tab, or adjust your search
+                      </Content>
+                    )}
+                </Tab>
+              </Tabs>
+
+              {/*
               <Table>
                 <Thead className='conversion-required-header'>
                   <Tr className='fat-row'>
@@ -1401,6 +1749,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
                   ))}
                 </Tbody>
               </Table>
+              */}
             </CardBody>
           </Card>
         </FlexItem>

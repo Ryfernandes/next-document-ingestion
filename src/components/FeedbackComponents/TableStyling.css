@@ -1,19 +1,14 @@
-.pf-v6-c-table .conversion-required-row {
+.pf-v6-c-table .conversion-required-row, .upload-complete-row {
   border-right: 1px solid #c7c7c7;
-  border-left: 4px solid #FFCC17;
-  border-bottom: none;
-  border-top: 1px solid #c7c7c7;
+  border-left: 1px solid #c7c7c7;
+  border-top: none;
+  border-bottom: 1px solid #c7c7c7;
 }
 
 .pf-v6-c-table .conversion-required-header {
   border: 1px solid #FFCC17;
   border-left: 4px solid #FFCC17;
   background-color: #ffcd171a;
-}
-
-.upload-complete-row {
-  border-right: 1px solid #c7c7c7;
-  border-left: 4px solid #3D7317;
 }
 
 .pf-v6-c-table .upload-complete-header {
@@ -63,6 +58,10 @@
   width: 80px;
 }
 
+.pf-v6-c-table__td.spinner-container {
+  width: 30px;
+}
+
 .select-files-toggle .pf-v6-c-menu-toggle__text {
   min-width: 70px;
 }
@@ -79,4 +78,28 @@
 
 .pf-v6-c-menu.no-gap .pf-v6-c-menu__content {
   gap: 0;
+}
+
+.pf-v6-c-tabs__item.pf-m-current.conversion-required-tab-title > .pf-v6-c-tabs__link::after {
+  border-bottom: 4px solid #FFCC17;
+}
+
+.pf-v6-c-tabs__item.conversion-required-tab-title button {
+  padding: 1rem;
+}
+
+.pf-v6-c-tabs__item.pf-m-current.conversion-required-tab-title button {
+  background-color: #ffcd171a;
+}
+
+.pf-v6-c-tabs__item.pf-m-current.upload-complete-tab-title > .pf-v6-c-tabs__link::after {
+  border-bottom: 4px solid #3D7317;
+}
+
+.pf-v6-c-tabs__item.upload-complete-tab-title button {
+  padding: 1rem;
+}
+
+.pf-v6-c-tabs__item.pf-m-current.upload-complete-tab-title button {
+  background-color: #3D73171a;
 }
