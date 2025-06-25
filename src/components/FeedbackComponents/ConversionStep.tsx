@@ -45,7 +45,8 @@ import {
   Tabs,
   Tab,
   TabTitleText,
-  Pagination
+  Pagination,
+  ExpandableSection
 } from '@patternfly/react-core';
 
 import {
@@ -97,12 +98,16 @@ type ResourcePackageGroup = {
 }
 
 type ConversionStepProps = {
-
+  localPort: string;
+  returnPort: (port: string) => void;
 }
 
 // Later, add workspace file support
 
-const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
+const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPort, returnPort }) => {
+  const [conversionErrorMessage, setConversionErrorMessage] = useState<string | null>(null);
+  const [errorShown, setErrorShown] = useState<boolean>(false);
+
   const [showConversionProfiles, setShowConversionProfiles] = useState(false);
   const [showDocumentation, setShowDocumentation] = useState(false);
 
@@ -792,9 +797,10 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
           abortControllerRef,
           () => false,
           addConvertedResource,
-          (message: string) => {alert(message)},
+          (message: string) => {setConversionErrorMessage(message)},
           start,
-          reset
+          reset,
+          localPort
         )
       } else {
         convertingGroups.current.push(...toConvertGroups);
@@ -1963,6 +1969,37 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({  }) => {
               </Button>
             </FlexItem>
           </Flex>
+        </ModalFooter>
+      </Modal>
+
+      <Modal
+        isOpen={conversionErrorMessage !== null}
+        disableFocusTrap
+        variant="small"
+      >
+        <ModalHeader title="🤕 Uh oh..."/>
+        <ModalBody>
+          <Content component='p'>
+            There was an error during the conversion process, likely due to docling-serve disconnecting. Please click "Continue" to reconfirm the configuration
+          </Content>
+          <ExpandableSection
+            toggleText={errorShown ? 'Hide full error message' : 'Show full error message'}
+            onToggle={() => setErrorShown(!errorShown)}
+            isExpanded={errorShown}
+          >
+            {conversionErrorMessage}
+          </ExpandableSection>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setConversionErrorMessage(null);
+              returnPort("");
+            }}
+          >
+            Continue
+          </Button>
         </ModalFooter>
       </Modal>
     </>

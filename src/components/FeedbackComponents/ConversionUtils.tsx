@@ -30,7 +30,7 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
   return window.btoa(binary);
 };
 
-const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, signal: AbortSignal): Promise<BlobPart[]> => {
+const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, signal: AbortSignal, localPort: string): Promise<BlobPart[]> => {
   // 1) Read file as ArrayBuffer
   const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
     const reader = new FileReader();
@@ -51,8 +51,6 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
   // 2) Attempt conversion call
 
   if (process.env.NEXT_PUBLIC_CONVERT_LOCAL) {
-    alert('converting local');
-
     const body = {
       options: {
         from_formats: ['docx', 'pptx', 'html', 'image', 'pdf', 'asciidoc', 'md', 'xlsx'],
@@ -82,7 +80,7 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
         ]
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_IL_FILE_CONVERSION_SERVICE || 'http://doclingserve:5001';
+    const baseUrl = `http://localhost:${localPort}`
 
     try {
       const healthRes = await fetch(`${baseUrl}/health`);
@@ -192,14 +190,14 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
   }
 };
 
-const convertToMarkdownWithOptionsIfNeeded = async (filePackage: ConversionPackage, signal: AbortSignal): Promise<File> => {
+const convertToMarkdownWithOptionsIfNeeded = async (filePackage: ConversionPackage, signal: AbortSignal, localPort: string): Promise<File> => {
   // If user picked a .md file, no need to call the conversion route
   if (filePackage.file.name.toLowerCase().endsWith('.md')) {
     return filePackage.file;
   }
 
   try {
-    const blobParts = await convertToMarkdownWithOptions(filePackage, signal);
+    const blobParts = await convertToMarkdownWithOptions(filePackage, signal, localPort);
 
     // Create a new `.md` File object
     const newName = filePackage.file.name.replace(/\.[^/.]+$/, '') + '.md';
@@ -226,7 +224,8 @@ export const convertFilesToMarkdownWithOptions = async (
   returnResource: (newResource: Resource) => void,
   onError: (message: string) => void,
   start: () => void,
-  reset: () => void
+  reset: () => void,
+  localPort: string
 ) => {
   const newFiles: File[] = [];
 
@@ -240,7 +239,7 @@ export const convertFilesToMarkdownWithOptions = async (
         start();
 
         abortControllerRef.current = new AbortController();
-        const convertedFile = await convertToMarkdownWithOptionsIfNeeded({ file: resourcePackage.resource.file, profile: resourcePackage.conversionProfile }, abortControllerRef.current.signal);
+        const convertedFile = await convertToMarkdownWithOptionsIfNeeded({ file: resourcePackage.resource.file, profile: resourcePackage.conversionProfile }, abortControllerRef.current.signal, localPort);
         const newResource = { ...resourcePackage.resource, originalFile: resourcePackage.resource.file, file: convertedFile, datetimeConverted: new Date() };
         
         returnResource(newResource);
@@ -265,85 +264,3 @@ export const convertFilesToMarkdownWithOptions = async (
   // Update states
   return newFiles;
 };
-
-
-
-
-
-
-
-// src/app/api/convert/route.ts
-
-import { NextResponse } from 'next/server';
-
-`use server`;
-
-interface ConvertRequestBody {
-  options?: {
-    output_markdown?: boolean;
-    include_images?: boolean;
-  };
-  file_source: {
-    base64_string: string;
-    filename: string;
-  };
-}
-
-// This route calls the external REST service to convert any doc => markdown
-export async function POST(request: Request) {
-  // 1. Parse JSON body from client
-  const body: ConvertRequestBody = await request.json();
-
-  // 2. Read the IL_FILE_CONVERSION_SERVICE from .env
-  const baseUrl = process.env.IL_FILE_CONVERSION_SERVICE || 'http://doclingserve:5001';
-
-  // 3. Check the health of the conversion service before proceeding
-  try {
-    const healthRes = await fetch(`${baseUrl}/health`);
-    if (!healthRes.ok) {
-      console.error('The file conversion service is offline or returned non-OK status:', healthRes.status, healthRes.statusText);
-      return NextResponse.json({ error: 'Conversion service is offline, only markdown files accepted.' }, { status: 503 });
-    }
-
-    // Parse the health response body in case we need to verify its "status":"ok"
-    const healthData = await healthRes.json();
-    if (!healthData.status || healthData.status !== 'ok') {
-      console.error('Doc->md conversion service health check response not "ok":', healthData);
-      return NextResponse.json({ error: 'Conversion service is offline, only markdown files accepted.' }, { status: 503 });
-    }
-  } catch (error: unknown) {
-    console.error('Error conversion service health check:', error);
-    //!!! HERE
-    return NextResponse.json({ error: `Conversion service is offline, only markdown files accepted. Used: ${process.env.IL_FILE_CONVERSION_SERVICE || 'http://doclingserve:5001'}` }, { status: 503 });
-  }
-
-  // 4. Service is healthy, proceed with md conversion
-  try {
-    const res = await fetch(`${baseUrl}/v1alpha/convert/source`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (!res.ok) {
-      console.error('Conversion service responded with error', res.status, res.statusText);
-      return NextResponse.json({ error: `Conversion service call failed. ${res.statusText}` }, { status: 500 });
-    }
-
-    // 5. Wait for the docling service to return the user submitted file converted to markdown
-    const data = await res.json();
-
-    // Return the markdown wrapped in JSON so the client side can parse it
-    return NextResponse.json({ content: data }, { status: 200 });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Error during doc->md conversion route call:', error);
-      return NextResponse.json({ error: 'md conversion failed.', message: error.message }, { status: 500 });
-    } else {
-      console.error('Unknown error during conversion route call:', error);
-      return NextResponse.json({ error: 'conversion failed due to an unknown error.' }, { status: 500 });
-    }
-  }
-}
