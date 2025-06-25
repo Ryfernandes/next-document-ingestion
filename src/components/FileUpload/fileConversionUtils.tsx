@@ -185,7 +185,7 @@ const convertToMarkdownWithOptions = async (filePackage: conversionPackage): Pro
     // Check if it's a 503 => offline service
     if (res.status === 503) {
       console.error('Conversion service offline, only .md files accepted');
-      throw new Error('The file conversion service is offline. Only Markdown file type can be accepted until service is restored.');
+      throw new Error(`The file conversion service is offline. Only Markdown file type can be accepted until service is restored. ${process.env.IL_FILE_CONVERSION_SERVICE}`);
     }
     console.error(`Conversion service responded with status ${res.status}`);
     throw new Error(`Could not convert file: ${filePackage.file.name}. Service error: ${res.statusText}`);
