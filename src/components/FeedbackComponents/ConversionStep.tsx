@@ -1073,6 +1073,18 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
   const totalPageFiles = activeTabKey === 'conversion-required' ? conversionRequiredResources.length : uploadCompleteResources.length;
   const numPageFilesSelected = activeTabKey === 'conversion-required' ? selectedConversionRequiredFileNames.length : selectedUploadCompleteFileNames.length;
 
+  // ------ EXPANDED BULK SELECT ------
+
+  const selectPage = () => {
+    if (activeTabKey === 'conversion-required') {
+      setSelectedConversionRequiredFileNames(shownConversionRequiredResources.slice((page - 1) * perPage, Math.min(page * perPage, conversionRequriedLengthRef.current)).map((resource) => resource.file.name));
+    } else {
+      setSelectedUploadCompleteFileNames(shownUploadCompleteResources.slice((page - 1) * perPage, Math.min(page * perPage, uploadCompleteLengthRef.current)).map((resource) => resource.file.name));
+    }
+
+    setSelectFilesDropdownOpen(false);
+  }
+
   return (
     <>
       <ConversionHeader openConversionProfiles={handleConversionProfilesOpen} setShowDocumentation={setShowDocumentation} />
@@ -1136,6 +1148,13 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                           </DropdownItem>
                           <DropdownItem
                             value={1}
+                            key="select-page"
+                            onClick={selectPage}
+                          >
+                            Select page ({Math.min(perPage, totalPageFiles - ((page - 1) * perPage))})
+                          </DropdownItem>
+                          <DropdownItem
+                            value={2}
                             key="select-all"
                             onClick={() => selectAllFiles(true, activeTabKey as string)}
                           >
