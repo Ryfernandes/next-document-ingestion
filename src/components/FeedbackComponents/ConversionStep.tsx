@@ -998,6 +998,11 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     document.body.removeChild(link);
   }
 
+  // ------ DOWNLOAD DROPDOWN ------
+
+  const [downloadDropdownOpen, setDownloadDropdownOpen] = useState(false);
+
+
   return (
     <>
       <ConversionHeader openConversionProfiles={handleConversionProfilesOpen} setShowDocumentation={setShowDocumentation} />
@@ -1085,6 +1090,44 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                         Convert
                       </Button>
                     </ToolbarItem>
+                    <ToolbarItem key="download-menu">
+                      <Dropdown
+                        isOpen={downloadDropdownOpen}
+                        onSelect={() => setDownloadDropdownOpen(true)}
+                        onOpenChange={(isOpen: boolean) => {setDownloadDropdownOpen(isOpen)}}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle variant='secondary' className="download-menu" ref={toggleRef} onClick={() => setDownloadDropdownOpen(!downloadDropdownOpen)} isExpanded={downloadDropdownOpen}>
+                            Download
+                          </MenuToggle>
+                        )}
+                        ouiaId="DownloadDropdown"
+                        shouldFocusToggleOnSelect
+                      >
+                        <DropdownList>
+                          <MenuItem
+                            itemId="download-files"
+                            onClick={handleDownloadFiles}
+                            isDisabled={numFilesSelected === 0}
+                          >
+                            Download files ({numFilesSelected})
+                          </MenuItem>
+                          <MenuItem
+                            itemId="download-original-files"
+                            onClick={handleDownloadOriginalFiles}
+                            isDisabled={revertableSelection.length === 0}
+                          >
+                            Download original files ({revertableSelection.length})
+                          </MenuItem>
+                          <MenuItem
+                            className='blue-item'
+                            itemId="download-all-files"
+                            onClick={() => downloadFilesAsZip([...conversionRequiredResources, ...uploadCompleteResources].map((resource) => resource.file))}
+                          >
+                            Download all files ({conversionRequiredResources.length + uploadCompleteResources.length})
+                          </MenuItem>
+                        </DropdownList>
+                      </Dropdown>
+                    </ToolbarItem>
                     <ToolbarItem key="actions-menu">
                       <MenuContainer
                         isOpen={fileActionsDropdownOpen}
@@ -1159,19 +1202,6 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                                   isDisabled={!selectionRevertable}
                                 >
                                   Revert conversion ({revertableSelection.length})
-                                </MenuItem>
-                                <MenuItem
-                                  itemId="download-files"
-                                  onClick={handleDownloadFiles}
-                                >
-                                  Download files ({numFilesSelected})
-                                </MenuItem>
-                                <MenuItem
-                                  itemId="download-original-files"
-                                  onClick={handleDownloadOriginalFiles}
-                                  isDisabled={revertableSelection.length === 0}
-                                >
-                                  Download original files ({revertableSelection.length})
                                 </MenuItem>
                                 <MenuItem
                                   itemId="delete-files"

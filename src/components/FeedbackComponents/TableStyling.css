@@ -42,6 +42,10 @@
   color: #B1380B;
 }
 
+.pf-v6-c-menu__item.blue-item {
+  color: #0066CC;
+}
+
 .pf-m-disabled .pf-v6-c-menu__item.danger-item {
   color: #a3a3a3;
 }
