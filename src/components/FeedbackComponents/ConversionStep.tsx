@@ -268,6 +268,20 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     'text/markdown': 'Markdown'
   }
 
+  const translateFileType = (mimeType: string): string => {
+    if (fileTypeTranslations[mimeType]) {
+      return fileTypeTranslations[mimeType];
+    }
+
+    const [type] = mimeType.split('/');
+    const wildcardKey = `${type}/*`;
+    if (fileTypeTranslations[wildcardKey]) {
+      return fileTypeTranslations[wildcardKey];
+    }
+
+    return 'Unknown'
+  }
+
   const sizeForDisplay = (size: number): string => {
     if (size < 1024) {
       return `${size} B`;
@@ -281,7 +295,13 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
   }
 
   const getfileIcon = (type: string) => {
-    switch (type) {
+    let modifiedType = type;
+
+    if (modifiedType.includes('image/')) {
+      modifiedType = 'image/*';
+    }
+
+    switch (modifiedType) {
       case 'application/pdf':
         return <Icon><FilePDF /></Icon>;
       case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
@@ -1147,7 +1167,8 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     'Image',
     'HTML',
     'AsciiDoc',
-    'Markdown'
+    'Markdown',
+    'Unknown'
   ]
 
   const sourceOptions = [
@@ -1179,7 +1200,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
 
   const applyFilter = (resources: Resource[]) => {
     if (activeTabKey === 'conversion-required') {
-      return resources.filter((resource) => selectedFilterValues.includes(fileTypeTranslations[resource.file.type]));
+      return resources.filter((resource) => selectedFilterValues.includes(translateFileType(resource.file.type)));
     } else {
       return resources.filter((resource) => selectedFilterValues.includes(resource.datetimeConverted ? 'Converted' : 'Uploaded'));
     }
@@ -1652,7 +1673,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                               {getfileIcon(resource.file.type)}
                             </FlexItem>
                             <FlexItem>
-                              {fileTypeTranslations[resource.file.type] || 'Unknown'}
+                              {translateFileType(resource.file.type)}
                             </FlexItem>
                           </Flex>
                         </Td>
@@ -1821,7 +1842,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                             {getfileIcon(resource.file.type)}
                           </FlexItem>
                           <FlexItem>
-                            {fileTypeTranslations[resource.file.type] || 'Unknown'}
+                            {translateFileType(resource.file.type)}
                           </FlexItem>
                         </Flex>
                       </Td>
