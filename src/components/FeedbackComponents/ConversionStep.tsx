@@ -81,6 +81,7 @@ import FileWord from '@patternfly/react-icons/dist/esm/icons/outlined-file-word-
 import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 import PlusIcon from '@patternfly/react-icons/dist/esm/icons/plus-icon';
 import PendingIcon from '@patternfly/react-icons/dist/esm/icons/pending-icon';
+import ExternalLinkIcon from '@patternfly/react-icons/dist/esm/icons/external-link-alt-icon';
 
 import { Spinner } from '@patternfly/react-core'
 
@@ -1355,6 +1356,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                                 className="link-item"
                               >
                                 Explore the default profiles
+                                <Icon isInline size="sm" style={{ marginLeft: '0.4rem' }}>
+                                  <ExternalLinkIcon color="#0066CC"/>
+                                </Icon>
                               </DropdownItem>
                             </DropdownList>
                           </Dropdown>
@@ -1592,7 +1596,10 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
           <Content component="p">
             Select profiles in the left menu to view and edit their settings. Create new profiles to add a new group of settings. Learn more about the default conversion profiles{" "}
               <Content component="a" href="https://github.com/fabianofranz/docling-conversion-tutorials/tree/main" target="_blank" rel="noopener noreferrer">
-                here
+                here 
+                <Icon isInline size="sm" style={{ marginLeft: '0.25rem', marginRight: '0.4rem' }}>
+                  <ExternalLinkIcon color="#0066CC"/>
+                </Icon>
               </Content>
           </Content>
           <Flex style={{ marginTop: '2rem' }} columnGap={{ default: 'columnGapLg' }}>
@@ -1620,7 +1627,16 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
               </Menu>
             </FlexItem>
             <FlexItem flex={{ default: 'flex_1' }} className={`settings-view-container ${initialViewedProfile.alias === "" ? "green-border" : hasChanged ? "blue-border" : ""}`} ref={settingsViewContainerRef}>
-              <Content style={{ fontSize: '0.8rem'}} component="p">Want to learn more about these options? Click <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">here</Content>{" "}to find the documentation for each parameter</Content>
+              <Content style={{ fontSize: '0.8rem'}} component="p">
+                Want to learn more about these options? Click{" "}
+                <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">
+                  here
+                  <Icon isInline size="sm" style={{ marginLeft: '0.25rem', marginRight: '0.4rem' }}>
+                    <ExternalLinkIcon color="#0066CC"/>
+                  </Icon>
+                </Content>
+                to find the documentation for each parameter
+              </Content>
               <Flex columnGap={{ default: 'columnGap2xl' }}>
                 <FlexItem flex={{ default: 'flex_1' }}>
                   <Flex direction={{ default: 'column' }}>
