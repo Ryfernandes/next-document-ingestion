@@ -107,3 +107,8 @@
 .conversion-required-row .pf-v6-c-table__check input, .upload-complete-row .pf-v6-c-table__check input {
   transform: translateY(2px);
 }
+
+.link-item .pf-v6-c-menu__item-text{
+  color: #0066CC;
+  text-decoration: underline;
+}

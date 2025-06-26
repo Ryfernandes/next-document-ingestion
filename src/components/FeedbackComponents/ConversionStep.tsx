@@ -985,6 +985,18 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     }
   }, [shownConversionRequiredResourcesLength, shownUploadCompleteResourcesLength, activeTabKey]);
 
+  // ------ LEARN MORE ------
+
+  const handleLearnMoreClick = () => {
+    const link = document.createElement('a');
+    link.href = "https://github.com/fabianofranz/docling-conversion-tutorials/tree/main"
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <>
       <ConversionHeader openConversionProfiles={handleConversionProfilesOpen} setShowDocumentation={setShowDocumentation} />
@@ -1330,12 +1342,20 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                             <DropdownList>
                               <Divider component="li" key="separator" />
                               <DropdownItem
-                                  value={conversionProfiles.length}
-                                  key="create"
-                                  onClick={() => handleConversionProfilesOpen(true)}
-                                >
-                                  Create conversion profile
-                                </DropdownItem>
+                                value={conversionProfiles.length}
+                                key="create"
+                                onClick={() => handleConversionProfilesOpen(true)}
+                              >
+                                Create conversion profile
+                              </DropdownItem>
+                              <DropdownItem
+                                value={conversionProfiles.length + 1}
+                                key="learn-more"
+                                onClick={handleLearnMoreClick}
+                                className="link-item"
+                              >
+                                Explore the default profiles
+                              </DropdownItem>
                             </DropdownList>
                           </Dropdown>
                         </Td>
@@ -1570,7 +1590,10 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
         />
         <ModalBody id="manage-conversion-profiles-variant">
           <Content component="p">
-            Select profiles in the left menu to view and edit their settings. Create new profiles to add a new group of settings
+            Select profiles in the left menu to view and edit their settings. Create new profiles to add a new group of settings. Learn more about the default conversion profiles{" "}
+              <Content component="a" href="https://github.com/fabianofranz/docling-conversion-tutorials/tree/main" target="_blank" rel="noopener noreferrer">
+                here
+              </Content>
           </Content>
           <Flex style={{ marginTop: '2rem' }} columnGap={{ default: 'columnGapLg' }}>
             <FlexItem>
@@ -1597,7 +1620,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
               </Menu>
             </FlexItem>
             <FlexItem flex={{ default: 'flex_1' }} className={`settings-view-container ${initialViewedProfile.alias === "" ? "green-border" : hasChanged ? "blue-border" : ""}`} ref={settingsViewContainerRef}>
-              <Content style={{ fontSize: '0.8rem'}} component="p">Want to learn more about these options? Click <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">here</Content> </Content>
+              <Content style={{ fontSize: '0.8rem'}} component="p">Want to learn more about these options? Click <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">here</Content>{" "}to find the documentation for each parameter</Content>
               <Flex columnGap={{ default: 'columnGap2xl' }}>
                 <FlexItem flex={{ default: 'flex_1' }}>
                   <Flex direction={{ default: 'column' }}>
