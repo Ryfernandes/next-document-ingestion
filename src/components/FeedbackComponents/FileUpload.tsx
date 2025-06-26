@@ -53,9 +53,10 @@ interface FileUploadProps {
   workspaceFiles: File[];
   pageFiles: File[];
   setResources: (toOverwrite: File[], toUpload: File[]) => void;
+  onOpen: () => void;
 }
 
-const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, pageFiles, setResources }) => {
+const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, pageFiles, setResources, onOpen }) => {
   const [fromDrop, setFromDrop] = useState<File[]>([]);
 
   const [duplicateFilePackages, setDuplicateFilePackages] = useState<DuplicatePackage[]>([]);
@@ -92,6 +93,9 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
 
   // callback that will be called by the react dropzone with the newly dropped file objects
   const handleFileDrop = (_event: DropEvent, droppedFiles: File[]) => {
+    // Close other menu's
+    onOpen();
+
     // identify files that have conflicting names
     const duplicates = findDuplicateFiles([...workspaceFiles, ...pageFiles, ...droppedFiles]);
 

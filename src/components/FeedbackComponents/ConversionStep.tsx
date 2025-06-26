@@ -465,12 +465,23 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     setOpenEditConversionProfileDropdown(null);
   }
 
+  const feignClick = () => {
+    const button = document.createElement('button');
+    document.body.appendChild(button);
+    button.click();
+    document.body.removeChild(button);
+  }
+
   const handleConversionProfilesOpen = (create: boolean = false) => {
-    setConvertDropdownOpen(false);
     setShowConversionProfiles(true);
     setOpenProfileDropdown(null);
     setOpenEditConversionProfileDropdown(null);
     setFileActionsDropdownOpen(false);
+    setDownloadDropdownOpen(false);
+    setConvertDropdownOpen(false);
+    setSelectFilesDropdownOpen(false);
+
+    feignClick();
 
     if (create) {
       setViewedProfile(creationDefault);
@@ -479,6 +490,17 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
       setViewedProfile(conversionProfiles[0]);
       setInitialViewedProfile(conversionProfiles[0]);
     }
+  }
+
+  const handleFileUploadOpen = () => {
+    setOpenProfileDropdown(null);
+    setOpenEditConversionProfileDropdown(null);
+    setFileActionsDropdownOpen(false);
+    setDownloadDropdownOpen(false);
+    setConvertDropdownOpen(false);
+    setSelectFilesDropdownOpen(false);
+
+    feignClick();
   }
 
   const [showSaveWarning, setShowSaveWarning] = useState(false);
@@ -1025,6 +1047,23 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
 
   const [convertDropdownOpen, setConvertDropdownOpen] = useState(false);
 
+  // ------ CLOSING MENUS ------
+
+  useEffect(() => {
+    if (conversionErrorMessage) {
+      convertingGroups.current = [];
+      setConvertingFileNames([]);
+      setOpenProfileDropdown(null);
+      setOpenEditConversionProfileDropdown(null);
+      setFileActionsDropdownOpen(false);
+      setDownloadDropdownOpen(false);
+      setConvertDropdownOpen(false);
+      setSelectFilesDropdownOpen(false);
+
+      feignClick();
+    }
+  }, [conversionErrorMessage]);
+
   return (
     <>
       <ConversionHeader openConversionProfiles={handleConversionProfilesOpen} setShowDocumentation={setShowDocumentation} />
@@ -1034,6 +1073,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
             workspaceFiles={workspaceFiles}
             pageFiles={[...conversionRequiredResources.map((r) => r.file), ...uploadCompleteResources.map((r) => r.file)]}
             setResources={onUpload}
+            onOpen={handleFileUploadOpen}
           />
         </FlexItem>
         <FlexItem flex={{ default: 'flex_1' }} alignSelf={{ default: 'alignSelfFlexStart'}}>
