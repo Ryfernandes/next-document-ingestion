@@ -250,7 +250,7 @@ const DoclingConfiguration: React.FunctionComponent<DoclingConfigurationProps> =
             }}
             isLoading={loading}
           >
-            Continue
+            Ok
           </Button>
         </ModalFooter>
       </Modal>
