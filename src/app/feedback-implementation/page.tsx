@@ -20,7 +20,7 @@ const Page = () => {
       serverPort = '5001';
     }
 
-    const baseUrl = `http://localhost:${serverPort}`;
+    const baseUrl = process.env.NEXT_PUBLIC_CONVERT_LOCAL === 'true' ? process.env.NEXT_PUBLIC_IL_FILE_CONVERSION_SERVICE : `http://localhost:${serverPort}`;
     try {
       const healthRes = await fetch(`${baseUrl}/health`);
 

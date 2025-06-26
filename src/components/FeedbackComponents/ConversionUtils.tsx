@@ -50,7 +50,7 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
 
   // 2) Attempt conversion call
 
-  if (process.env.NEXT_PUBLIC_CONVERT_LOCAL) {
+  if (process.env.NEXT_PUBLIC_CONVERT_LOCAL === 'true') {
     const body = {
       options: {
         from_formats: ['docx', 'pptx', 'html', 'image', 'pdf', 'asciidoc', 'md', 'xlsx'],
@@ -83,7 +83,7 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
     const baseUrl = `http://localhost:${localPort}`
 
     try {
-      const healthRes = await fetch(`${baseUrl}/health`);
+      const healthRes = await fetch(`${baseUrl}/health`, {signal});
       if (!healthRes.ok) {
         console.error('The file conversion service is offline or returned non-OK status:', healthRes.status, healthRes.statusText);
         throw new Error(`Could not convert file: ${filePackage.file.name}. Conversion service is offline, only markdown files accepted.`);
@@ -96,8 +96,12 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
         throw new Error(`Could not convert file: ${filePackage.file.name}. Conversion service is offline, only markdown files accepted.`);
       }
     } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error
+      }
+
       console.error('Error conversion service health check:', error);
-      //!!! HERE
+
       throw new Error(`Could not convert file: ${filePackage.file.name}. Conversion service is offline, only markdown files accepted.`);
     }
 
@@ -107,7 +111,8 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal
       });
   
       if (!res.ok) {
@@ -120,7 +125,9 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
       return [data.document.md_content];
       
     } catch (error: unknown) {
-      if (error instanceof Error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error
+      } else if (error instanceof Error) {
         console.error('Error during doc->md conversion route call:', error);
         throw new Error(`Could not convert file: ${filePackage.file.name}. Md conversion failed. ${error.message}`);
       } else {
@@ -168,7 +175,7 @@ const convertToMarkdownWithOptions = async (filePackage: ConversionPackage, sign
         // Check if it's a 503 => offline service
         if (res.status === 503) {
           console.error('Conversion service offline, only .md files accepted');
-          //HERE
+
           const data = await res.json();
           
           throw new Error(`The file conversion service is offline. Only Markdown file type can be accepted until service is restored. ${data.error}`);

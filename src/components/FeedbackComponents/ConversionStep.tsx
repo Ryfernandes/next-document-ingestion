@@ -750,6 +750,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
 
   const numDeleteableFiles = selectedConversionRequiredFileNames.filter(name => !convertingFileNames.includes(name)).length + selectedUploadCompleteFileNames.length;
   const numConvertableFiles = selectedConversionRequiredFileNames.filter(name => !convertingFileNames.includes(name)).length;
+  const numAllConvertableFiles = conversionRequiredResources.filter(resource => !convertingFileNames.includes(resource.file.name)).length;
   const numConvertingFiles = selectedConversionRequiredFileNames.filter(name => convertingFileNames.includes(name)).length;
 
   const selectedConversionRequiredFileNamesRef = useRef<string[]>(selectedConversionRequiredFileNames);
@@ -1167,9 +1168,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                                   itemId="convert-files"
                                   onClick={handleConvertAll}
                                   className="blue-item"
-                                  isDisabled={numConvertableFiles === 0}
+                                  isDisabled={numAllConvertableFiles === 0}
                                 >
-                                  Convert all files ({numConvertableFiles})
+                                  Convert all files ({numAllConvertableFiles})
                                 </MenuItem>
                               </MenuList>
                             </MenuContent>
