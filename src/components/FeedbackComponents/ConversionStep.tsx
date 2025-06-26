@@ -214,9 +214,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
       (resource) => !toOverwrite.some(fileToRemove => getFileStem(fileToRemove) === getFileStem(resource.file))
     );
 
-    if ((conversionRequiredClosed && newConversionRequiredResources.length === 0) && (!uploadCompleteClosed || [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown').length > 0)) {
+    if ((conversionRequiredClosed && [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown').length == 0) && (!uploadCompleteClosed || [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown').length > 0)) {
       setActiveTabKey('upload-complete');
-    } else if ((uploadCompleteClosed && newUploadCompleteResources.length === 0) && (!conversionRequiredClosed || [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown').length > 0)) {
+    } else if ((uploadCompleteClosed && [...toOverwrite, ...toUpload].filter((file) => file.type === 'text/markdown').length == 0) && (!conversionRequiredClosed || [...toOverwrite, ...toUpload].filter((file) => file.type !== 'text/markdown').length > 0)) {
       setActiveTabKey('conversion-required');
     }
 
