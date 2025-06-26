@@ -1036,22 +1036,22 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                         onSelect={() => setSelectFilesDropdownOpen(true)}
                         onOpenChange={(isOpen: boolean) => setSelectFilesDropdownOpen(isOpen)}
                         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                          <MenuToggle
-                            className="select-files-toggle"
-                            ref={toggleRef}
-                            onClick={() => setSelectFilesDropdownOpen(!selectFilesDropdownOpen)}
-                            isExpanded={selectFilesDropdownOpen}
-                            splitButtonItems={[
-                              <MenuToggleCheckbox 
-                                key="split-button-checkbox" 
-                                id="split-button-checkbox"
-                                onChange={(isSelecting) => selectAllFiles(isSelecting, 'all')}
-                                isChecked={numFilesSelected == 0 ? false : numFilesSelected === totalFiles ? true : null}
-                              />
-                            ]}
-                          >
-                            {numFilesSelected} selected
-                          </MenuToggle>
+                            <MenuToggle
+                              className="select-files-toggle"
+                              ref={toggleRef}
+                              onClick={() => setSelectFilesDropdownOpen(!selectFilesDropdownOpen)}
+                              isExpanded={selectFilesDropdownOpen}
+                              splitButtonItems={[
+                                <MenuToggleCheckbox 
+                                  key="split-button-checkbox" 
+                                  id="split-button-checkbox"
+                                  onChange={(isSelecting) => selectAllFiles(isSelecting, 'all')}
+                                  isChecked={numFilesSelected == 0 ? false : numFilesSelected === totalFiles ? true : null}
+                                />
+                              ]}
+                            >
+                              {numFilesSelected > 0 ? `${numFilesSelected} selected` : ''}
+                            </MenuToggle>
                         )}
                         shouldFocusToggleOnSelect
                       >
