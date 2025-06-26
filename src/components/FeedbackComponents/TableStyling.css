@@ -120,3 +120,12 @@
   color: #0066CC;
   text-decoration: underline;
 }
+
+.pf-v6-c-tooltip.reduce-z {
+  z-index: 0 !important;
+}
+
+.pf-v6-c-content--a.tooltip-text {
+  font-size: 0.75rem;
+  color: #fff;
+}

@@ -83,6 +83,7 @@ import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-ico
 import PlusIcon from '@patternfly/react-icons/dist/esm/icons/plus-icon';
 import PendingIcon from '@patternfly/react-icons/dist/esm/icons/pending-icon';
 import ExternalLinkIcon from '@patternfly/react-icons/dist/esm/icons/external-link-alt-icon';
+import QuestionMarkIcon from '@patternfly/react-icons/dist/esm/icons/outlined-question-circle-icon';
 
 import { Spinner } from '@patternfly/react-core'
 
@@ -297,7 +298,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     }
   }
 
-  const formatDate = (date: Date, converted: boolean) => {
+  const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
       day: 'numeric',
       month: 'long',
@@ -311,7 +312,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     const formatter = new Intl.DateTimeFormat('en-US', options);
     const formattedDate = formatter.format(date);
   
-    return `${converted ? "Converted" : "Uploaded"} ${formattedDate} EST`;
+    return `${formattedDate} EST`;
   }
 
   const [conversionProfiles, setConversionProfiles] = useState<conversionProfile[]>(defaultConversionProfiles);
@@ -492,6 +493,25 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     }
   }
 
+  const inspectProfile = (alias: string) => {
+    setShowConversionProfiles(true);
+    setOpenProfileDropdown(null);
+    setOpenEditConversionProfileDropdown(null);
+    setFileActionsDropdownOpen(false);
+    setDownloadDropdownOpen(false);
+    setConvertDropdownOpen(false);
+    setSelectFilesDropdownOpen(false);
+
+    feignClick();
+
+    const profile = conversionProfiles.find((profile) => profile.alias === alias);
+
+    if (profile) {
+      setViewedProfile(profile);
+      setInitialViewedProfile(profile);
+    }
+  }
+
   const handleFileUploadOpen = () => {
     setOpenProfileDropdown(null);
     setOpenEditConversionProfileDropdown(null);
@@ -660,6 +680,12 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     if (!getErrors(viewedProfile.alias, 'alias') && !getErrors(viewedProfile.md_page_break_placeholder, 'md_page_break_placeholder')) {
       setConversionProfiles((prev) => prev.map((profile) => profile.alias === initialViewedProfile.alias ? viewedProfile : profile));
       setInitialViewedProfile(viewedProfile);
+      setConversionRequiredResources((prevResources => prevResources.map((resource) => {
+        if (resource.conversionProfile === initialViewedProfile.alias) {
+          return { ...resource, conversionProfile: viewedProfile.alias };
+        }
+        return resource;
+      })));
     }
   }
 
@@ -800,11 +826,6 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     setConversionRequiredResources((prev) => prev.filter((res) => res.file.name !== resource.originalFile?.name));
     setUploadCompleteResources((prev) => [...prev, resource]);
     setConvertingFileNames((prev) => prev.filter((fileName) => fileName !== resource.originalFile?.name));
-
-    if (resource.originalFile && selectedConversionRequiredFileNamesRef.current.includes(resource.originalFile.name)) {
-      setSelectedConversionRequiredFileNames((prev) => prev.filter((fileName) => fileName !== resource.originalFile?.name));
-      setSelectedUploadCompleteFileNames((prev) => [...prev, resource.file.name]);
-    }
   }
 
   const onConvert = async (toConvert: Resource[]) => {
@@ -1083,6 +1104,35 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     }
 
     setSelectFilesDropdownOpen(false);
+  }
+
+  // ------ DELETE CONVERSION PROFILES ------
+
+  const [showDeleteProfileWarning, setShowDeleteProfileWarning] = useState(false);
+
+  const handleDeleteProfile = () => {
+    setShowDeleteProfileWarning(true);
+  }
+
+  const handleDismissDeleteProfileWarning = () => {
+    setShowDeleteProfileWarning(false);
+  }
+
+  const handleConfirmDeleteProfile = () => {
+    setConversionProfiles((prev) => prev.filter((profile) => profile.alias !== viewedProfile.alias));
+    setViewedProfile(conversionProfiles[0]);
+    setInitialViewedProfile(conversionProfiles[0]);
+    setShowDeleteProfileWarning(false);
+    setAliasErrors([]);
+    setPlaceholderErrors([]);
+    setOpenEditConversionProfileDropdown(null);
+
+    setConversionRequiredResources((prev) => prev.map((resource) => {
+      if (resource.conversionProfile === viewedProfile.alias) {
+        return { ...resource, conversionProfile: conversionProfiles[0].alias };
+      }
+      return resource;
+    }));
   }
 
   return (
@@ -1629,7 +1679,38 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                         </Flex>
                       </Td>
                       <Td>{sizeForDisplay(resource.file.size)}</Td>
-                      <Td>{resource.datetimeConverted ? formatDate(resource.datetimeConverted, true): formatDate(resource.datetimeUploaded, false)}</Td>
+                      <Td>
+                        {resource.datetimeConverted ? (
+                          <>
+                            Converted
+                            <Tooltip
+                              className={showConversionProfiles ? 'reduce-z' : ''}
+                              content={
+                                <div>
+                                  Converted with the "
+                                    {conversionProfiles.map((profile) => profile.alias).includes(resource.conversionProfile) ? (
+                                      <Content className='tooltip-text' component='a' onClick={() => inspectProfile(resource.conversionProfile)}>{resource.conversionProfile}</Content>
+                                    ) : (
+                                      `${resource.conversionProfile}`
+                                    )}
+                                  " profile
+                                </div>
+                              }
+                              entryDelay={0}
+                              exitDelay={150}
+                            >
+                                <Icon size='md' style= {{ marginLeft: '0.75rem'}}>
+                                  <QuestionMarkIcon/>
+                                </Icon>
+                            </Tooltip>
+                          </>
+                        ) : (
+                          <>
+                            Uploaded
+                          </>
+                        )}
+                      </Td>
+                      <Td>{resource.datetimeConverted ? formatDate(resource.datetimeConverted): formatDate(resource.datetimeUploaded)}</Td>
                       <Td className='row-end-menu-container'>
                         <Dropdown
                           popperProps={{ position: 'right' }}
@@ -2103,6 +2184,11 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                 <FlexItem>
                   <Flex>
                     <FlexItem>
+                      <Button variant="danger" isDisabled={!viewedProfile.editable} onClick={handleDeleteProfile}>
+                        Delete Profile
+                      </Button>
+                    </FlexItem>
+                    <FlexItem>
                       <Button variant="secondary" isDisabled={!hasChanged} onClick={handleResetChanges}>
                         Reset Changes
                       </Button>
@@ -2177,6 +2263,34 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
           >
             Continue
           </Button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal
+        isOpen={showDeleteProfileWarning}
+        disableFocusTrap
+        variant="small"
+      >
+        <ModalHeader title="Delete Profile?"/>
+        <ModalBody>
+          <Content component='p'>
+            Are you sure that you want to delete this conversion profile? This action cannot be undone.
+          </Content>
+        </ModalBody>
+        <ModalFooter>
+          <Flex>
+            <FlexItem>
+              <Button key="delete" variant="danger" onClick={handleConfirmDeleteProfile}>
+                Delete
+              </Button>
+            </FlexItem>
+
+            <FlexItem>
+              <Button key="cancel" variant="secondary" onClick={handleDismissDeleteProfileWarning}>
+                Cancel
+              </Button>
+            </FlexItem>
+          </Flex>
         </ModalFooter>
       </Modal>
     </>
