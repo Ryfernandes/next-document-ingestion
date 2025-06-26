@@ -5,7 +5,7 @@
 import './TableStyling.css';
 import './ModalStyling.css';
 
-import JSZip from 'jszip';
+import JSZip, { filter } from 'jszip';
 
 import {
   Flex,
@@ -141,11 +141,19 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     }
   }
 
-  const selectAllFiles = (isSelecting = true, group: string) => {
+  const selectAllFiles = (isSelecting = true, explicitlyAll = false, group: string) => {
     if (group === 'conversion-required') {
-      setSelectedConversionRequiredFileNames(isSelecting ? conversionRequiredResources.map((resource) => resource.file.name) : []);
+      if (explicitlyAll || !isSelecting || areAllShownSelected()) {
+        setSelectedConversionRequiredFileNames(isSelecting ? conversionRequiredResources.map((resource) => resource.file.name) : []);
+      } else {
+        selectPage();
+      }
     } else if (group === 'upload-complete') {
-      setSelectedUploadCompleteFileNames(isSelecting ? uploadCompleteResources.map((resource) => resource.file.name) : []);
+      if (explicitlyAll || !isSelecting || areAllShownSelected()) {
+        setSelectedUploadCompleteFileNames(isSelecting ? uploadCompleteResources.map((resource) => resource.file.name) : []);
+      } else {
+        selectPage();
+      }
     } else if (group === 'all') {
       setSelectedConversionRequiredFileNames(isSelecting ? conversionRequiredResources.map((resource) => resource.file.name) : []);
       setSelectedUploadCompleteFileNames(isSelecting ? uploadCompleteResources.map((resource) => resource.file.name) : []);
@@ -153,9 +161,6 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
 
     setSelectFilesDropdownOpen(false);
   }
-
-  const areAllConversionRequiredResourcesSelected = selectedConversionRequiredFileNames.length === conversionRequiredResources.length;
-  const areAllUploadCompleteResourcesSelected = selectedUploadCompleteFileNames.length === uploadCompleteResources.length;
 
   const isResourceSelected = (resource: Resource) => [...selectedConversionRequiredFileNames, ...selectedUploadCompleteFileNames].includes(resource.file.name);
 
@@ -727,14 +732,6 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     setRecentSelectedRowIndex(null);
   }, [searchQuery]);
 
-  useEffect(() => {
-    setShownConversionRequiredResources(conversionRequiredResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase())));
-  }, [conversionRequiredResources, searchQuery]);
-
-  useEffect(() => {
-    setShownUploadCompleteResources(uploadCompleteResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase())));
-  }, [uploadCompleteResources, searchQuery]);
-
   // ------ DRILLDOWN -------
 
   const [menuDrilledIn, setMenuDrilledIn] = useState<string[]>([]);
@@ -826,6 +823,8 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     setConversionRequiredResources((prev) => prev.filter((res) => res.file.name !== resource.originalFile?.name));
     setUploadCompleteResources((prev) => [...prev, resource]);
     setConvertingFileNames((prev) => prev.filter((fileName) => fileName !== resource.originalFile?.name));
+
+    setSelectedConversionRequiredFileNames((prev) => prev.filter((fileName) => fileName !== resource.originalFile?.name));
   }
 
   const onConvert = async (toConvert: Resource[]) => {
@@ -1092,15 +1091,16 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
   // ------ TAB-SPECIFIC ------
 
   const totalPageFiles = activeTabKey === 'conversion-required' ? conversionRequiredResources.length : uploadCompleteResources.length;
+  const totalShownPageFiles = activeTabKey === 'conversion-required' ? shownConversionRequiredResources.length : shownUploadCompleteResources.length;
   const numPageFilesSelected = activeTabKey === 'conversion-required' ? selectedConversionRequiredFileNames.length : selectedUploadCompleteFileNames.length;
 
   // ------ EXPANDED BULK SELECT ------
 
   const selectPage = () => {
     if (activeTabKey === 'conversion-required') {
-      setSelectedConversionRequiredFileNames(shownConversionRequiredResources.slice((page - 1) * perPage, Math.min(page * perPage, conversionRequriedLengthRef.current)).map((resource) => resource.file.name));
+      setSelectedConversionRequiredFileNames(prev => [... new Set([...prev, ...shownConversionRequiredResources.slice((page - 1) * perPage, Math.min(page * perPage, conversionRequriedLengthRef.current)).map((resource) => resource.file.name)])]);
     } else {
-      setSelectedUploadCompleteFileNames(shownUploadCompleteResources.slice((page - 1) * perPage, Math.min(page * perPage, uploadCompleteLengthRef.current)).map((resource) => resource.file.name));
+      setSelectedUploadCompleteFileNames(prev => [... new Set([...prev, ...shownUploadCompleteResources.slice((page - 1) * perPage, Math.min(page * perPage, uploadCompleteLengthRef.current)).map((resource) => resource.file.name)])]);
     }
 
     setSelectFilesDropdownOpen(false);
@@ -1133,6 +1133,97 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
       }
       return resource;
     }));
+  }
+
+  // ------ FILTERS ------
+
+  const [selectedFilterValues, setSelectedFilterValues] = useState<string[]>([]);
+
+  const fileTypeOptions = [
+    'PDF',
+    'DOCX',
+    'PPTX',
+    'XLSX',
+    'Image',
+    'HTML',
+    'AsciiDoc',
+    'Markdown'
+  ]
+
+  const sourceOptions = [
+    'Uploaded',
+    'Converted'
+  ]
+
+  useEffect(() => {
+    if (activeTabKey === 'conversion-required') {
+      setShownConversionRequiredResources(applyFilter(conversionRequiredResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase()))));
+    }
+  }, [selectedFilterValues, conversionRequiredResources, searchQuery]);
+
+  useEffect(() => {
+    if (activeTabKey === 'upload-complete') {
+      setShownUploadCompleteResources(applyFilter(uploadCompleteResources.filter((resource) => resource.file.name.toLowerCase().includes(searchQuery.toLowerCase()))));
+    }
+  }, [selectedFilterValues, uploadCompleteResources, searchQuery]);
+
+  useEffect(() => {
+    if (activeTabKey === 'conversion-required') {
+      setSelectedFilterValues([...fileTypeOptions]);
+    } else {
+      setSelectedFilterValues([...sourceOptions]);
+    }
+
+    setRecentSelectedFilterIndex(null);
+  }, [activeTabKey])
+
+  const applyFilter = (resources: Resource[]) => {
+    if (activeTabKey === 'conversion-required') {
+      return resources.filter((resource) => selectedFilterValues.includes(fileTypeTranslations[resource.file.type]));
+    } else {
+      return resources.filter((resource) => selectedFilterValues.includes(resource.datetimeConverted ? 'Converted' : 'Uploaded'));
+    }
+  }
+
+  const [filtersDropdownOpen, setFiltersDropdownOpen] = useState(false);
+  const [recentSelectedFilterIndex, setRecentSelectedFilterIndex] = useState<number | null>(null);
+
+  const toggleFilterOption = (option: string, index: number) => {
+    if (shifting && recentSelectedFilterIndex != null) {
+      let valuesRange: string[] = [];
+
+      if (recentSelectedFilterIndex > index) {
+        valuesRange = activeTabKey === 'conversion-required' ? fileTypeOptions.slice(index, recentSelectedFilterIndex + 1) : sourceOptions.slice(index, recentSelectedFilterIndex + 1);
+      } else {
+        valuesRange = activeTabKey === 'conversion-required' ? fileTypeOptions.slice(recentSelectedFilterIndex, index + 1) : sourceOptions.slice(recentSelectedFilterIndex, index + 1);
+      }
+
+      if (selectedFilterValues.includes(option)) {
+        setSelectedFilterValues((prev) => prev.filter((value) => !valuesRange.includes(value)));
+      } else {
+        setSelectedFilterValues((prev) => [... new Set([...prev, ...valuesRange])]);
+      }
+    } else {
+      setSelectedFilterValues((prev) => {
+        if (prev.includes(option)) {
+          return prev.filter((value) => value !== option);
+        } else {
+          return [...prev, option];
+        }
+      });
+    }
+
+    setRecentSelectedFilterIndex(index);
+  }
+
+  // ------ ALL SHOWN SELECTED ------
+
+  const areAllShownSelected = () => {
+    if (activeTabKey === 'conversion-required') {
+      return shownConversionRequiredResources.length > 0 && shownConversionRequiredResources.slice((page - 1) * perPage, Math.min(page * perPage, shownConversionRequiredResources.length)).every((resource) => selectedConversionRequiredFileNames.includes(resource.file.name));
+    } else {
+      return shownUploadCompleteResources.length > 0 && shownUploadCompleteResources.slice((page - 1) * perPage, Math.min(page * perPage, shownUploadCompleteResources.length)).every((resource) => selectedUploadCompleteFileNames.includes(resource.file.name));
+    }
   }
 
   return (
@@ -1178,7 +1269,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                                 <MenuToggleCheckbox 
                                   key="split-button-checkbox" 
                                   id="split-button-checkbox"
-                                  onChange={(isSelecting) => selectAllFiles(isSelecting, activeTabKey as string)}
+                                  onChange={(isSelecting) => selectAllFiles(isSelecting, false, activeTabKey as string)}
                                   isChecked={numPageFilesSelected == 0 ? false : numPageFilesSelected === totalPageFiles ? true : null}
                                 />
                               ]}
@@ -1192,7 +1283,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                           <DropdownItem
                             value={0}
                             key="select-none"
-                            onClick={() => selectAllFiles(false, activeTabKey as string)}
+                            onClick={() => selectAllFiles(false, true, activeTabKey as string)}
                           >
                             Select none (0)
                           </DropdownItem>
@@ -1201,12 +1292,12 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                             key="select-page"
                             onClick={selectPage}
                           >
-                            Select page ({Math.min(perPage, totalPageFiles - ((page - 1) * perPage))})
+                            Select shown ({Math.min(perPage, totalShownPageFiles - ((page - 1) * perPage))})
                           </DropdownItem>
                           <DropdownItem
                             value={2}
                             key="select-all"
-                            onClick={() => selectAllFiles(true, activeTabKey as string)}
+                            onClick={() => selectAllFiles(true, true, activeTabKey as string)}
                           >
                             Select all ({activeTabKey === 'conversion-required' ? conversionRequriedLengthRef.current : uploadCompleteLengthRef.current})
                           </DropdownItem>
@@ -1220,6 +1311,62 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                         onChange={(_event, value) => setSearchQuery(value)}
                         onClear={() => setSearchQuery('')}
                       />
+                    </ToolbarItem>
+                    <ToolbarItem key="filters">
+                    <Dropdown
+                        isOpen={filtersDropdownOpen}
+                        onSelect={() => setFiltersDropdownOpen(true)}
+                        onOpenChange={(isOpen: boolean) => {setFiltersDropdownOpen(isOpen)}}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle className="filters-menu" ref={toggleRef} onClick={() => setFiltersDropdownOpen(!filtersDropdownOpen)} isExpanded={filtersDropdownOpen}>
+                            {activeTabKey == 'conversion-required' ? 'File Types' : 'Source'} <Badge className='filters-badge' isRead screenReaderText="Selected Filters">{selectedFilterValues.length}</Badge>
+                          </MenuToggle>
+                        )}
+                        ouiaId="FiltersDropdown"
+                        shouldFocusToggleOnSelect
+                      >
+                        <DropdownList className='filters-dropdown-list'>
+                          {activeTabKey === 'conversion-required' ? (
+                            <>
+                              {fileTypeOptions.map((fileType, index) => (
+                                <MenuItem
+                                  key={index}
+                                  className='file-type-option'
+                                  itemId={fileType}
+                                  onClick={() => toggleFilterOption(fileType, index)}
+                                >
+                                  <Checkbox
+                                    className='filter-checkbox'
+                                    id='checkbox'
+                                    isChecked={selectedFilterValues.includes(fileType)}
+                                    onChange={() =>{}}
+                                  />
+                                  {fileType}
+                                </MenuItem>
+                              ))}
+                            </>
+                          ) : (
+                            <>
+                              {sourceOptions.map((source, index) => (
+                                <MenuItem
+                                  key={index}
+                                  className='source-option'
+                                  itemId={source}
+                                  onClick={() => toggleFilterOption(source, index)}
+                                >
+                                  <Checkbox
+                                    className='filter-checkbox'
+                                    id='checkbox'
+                                    isChecked={selectedFilterValues.includes(source)}
+                                    onChange={() =>{}}
+                                  />
+                                  {source}
+                                </MenuItem>
+                              ))}
+                            </>
+                          )}
+                        </DropdownList>
+                      </Dropdown>
                     </ToolbarItem>
                     { activeTabKey === 'conversion-required' && (
                       <ToolbarItem key="convert-button">
