@@ -103,3 +103,7 @@
 .pf-v6-c-tabs__item.pf-m-current.upload-complete-tab-title button {
   background-color: #3D73171a;
 }
+
+.conversion-required-row .pf-v6-c-table__check input, .upload-complete-row .pf-v6-c-table__check input {
+  transform: translateY(2px);
+}
