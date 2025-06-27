@@ -923,6 +923,19 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
   // ------ DOWNLOAD ------
 
   const handleDownloadFiles = () => {
+    const files = [...conversionRequiredResources, ...uploadCompleteResources].filter((resource) => selectedConversionRequiredFileNames.includes(resource.file.name) || selectedUploadCompleteFileNames.includes(resource.file.name)).map((resource) => resource.file);
+    
+    if (files.length === 0) {
+      setFileActionsDropdownOpen(false);
+      return;
+    }
+
+    if (files.length === 1) {
+      downloadFile(files[0]);
+      setFileActionsDropdownOpen(false);
+      return;
+    }
+
     downloadFilesAsZip(
       [...conversionRequiredResources, ...uploadCompleteResources].filter((resource) => selectedConversionRequiredFileNames.includes(resource.file.name) || selectedUploadCompleteFileNames.includes(resource.file.name)).map((resource) => resource.file),
       'documents.zip'
@@ -931,6 +944,19 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
   }
 
   const handleDownloadOriginalFiles = () => {
+    const files = revertableSelection.map((resource) => resource.originalFile || resource.file);
+
+    if (files.length === 0) {
+      setFileActionsDropdownOpen(false);
+      return;
+    }
+
+    if (files.length === 1) {
+      downloadFile(files[0]);
+      setFileActionsDropdownOpen(false);
+      return;
+    }
+
     downloadFilesAsZip(
       revertableSelection.map((resource) => resource.originalFile || resource.file),
       'original_documents.zip'
@@ -1511,44 +1537,89 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                       </ToolbarItem>
                     )}
                     <ToolbarItem key="download-menu">
-                      <Dropdown
-                        isOpen={downloadDropdownOpen}
-                        onSelect={() => setDownloadDropdownOpen(true)}
-                        onOpenChange={(isOpen: boolean) => {setDownloadDropdownOpen(isOpen)}}
-                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                          <MenuToggle variant='secondary' className="download-menu" ref={toggleRef} onClick={() => setDownloadDropdownOpen(!downloadDropdownOpen)} isExpanded={downloadDropdownOpen}>
-                            Download
-                          </MenuToggle>
-                        )}
-                        ouiaId="DownloadDropdown"
-                        shouldFocusToggleOnSelect
-                      >
-                        <DropdownList>
-                          <MenuItem
-                            itemId="download-files"
-                            onClick={handleDownloadFiles}
-                            isDisabled={numFilesSelected === 0}
-                          >
-                            Download files ({numFilesSelected})
-                          </MenuItem>
-                          {activeTabKey === 'upload-complete' && (
-                            <MenuItem
-                              itemId="download-original-files"
-                              onClick={handleDownloadOriginalFiles}
-                              isDisabled={revertableSelection.length === 0}
-                            >
-                              Download original files ({revertableSelection.length})
-                            </MenuItem>
+                      {activeTabKey === 'conversion-required' ? (
+                        <Dropdown
+                          isOpen={downloadDropdownOpen}
+                          onSelect={() => setDownloadDropdownOpen(true)}
+                          onOpenChange={(isOpen: boolean) => {setDownloadDropdownOpen(isOpen)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle variant='secondary' className="download-menu" ref={toggleRef} onClick={() => setDownloadDropdownOpen(!downloadDropdownOpen)} isExpanded={downloadDropdownOpen}>
+                              Download
+                            </MenuToggle>
                           )}
-                          <MenuItem
-                            className='blue-item'
-                            itemId="download-all-files"
-                            onClick={() => downloadFilesAsZip(activeTabKey === 'conversion-required' ? conversionRequiredResources.map((resource) => resource.file) : uploadCompleteResources.map((resource) => resource.file))}
-                          >
-                            Download all files ({totalPageFiles})
-                          </MenuItem>
-                        </DropdownList>
-                      </Dropdown>
+                          ouiaId="DownloadDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            <MenuItem
+                              itemId="download-files"
+                              onClick={handleDownloadFiles}
+                              isDisabled={numFilesSelected === 0}
+                            >
+                              Download files ({numFilesSelected})
+                            </MenuItem>
+                            <MenuItem
+                              className='blue-item'
+                              itemId="download-all-files"
+                              onClick={() => downloadFilesAsZip(activeTabKey === 'conversion-required' ? conversionRequiredResources.map((resource) => resource.file) : uploadCompleteResources.map((resource) => resource.file))}
+                            >
+                              Download all files ({totalPageFiles})
+                            </MenuItem>
+                          </DropdownList>
+                        </Dropdown>
+                      ) : (
+                        <Dropdown
+                          isOpen={downloadDropdownOpen}
+                          onSelect={() => setDownloadDropdownOpen(true)}
+                          onOpenChange={(isOpen: boolean) => {setDownloadDropdownOpen(isOpen)}}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle
+                              variant="primary"
+                              splitButtonItems={[
+                                <MenuToggleAction
+                                  id='download-action'
+                                  key='download-action'
+                                  aria-label='Download selected files'
+                                  onClick={() => handleDownloadFiles()}
+                                >
+                                  Download
+                                </MenuToggleAction>
+                              ]}
+                              ref={toggleRef}
+                              onClick={() => setDownloadDropdownOpen(!downloadDropdownOpen)}
+                              isExpanded={downloadDropdownOpen}
+                            />
+                          )}
+                          ouiaId="DownloadDropdown"
+                          shouldFocusToggleOnSelect
+                        >
+                          <DropdownList>
+                            <MenuItem
+                              itemId="download-files"
+                              onClick={handleDownloadFiles}
+                              isDisabled={numFilesSelected === 0}
+                            >
+                              Download files ({numFilesSelected})
+                            </MenuItem>
+                            {activeTabKey === 'upload-complete' && (
+                              <MenuItem
+                                itemId="download-original-files"
+                                onClick={handleDownloadOriginalFiles}
+                                isDisabled={revertableSelection.length === 0}
+                              >
+                                Download original files ({revertableSelection.length})
+                              </MenuItem>
+                            )}
+                            <MenuItem
+                              className='blue-item'
+                              itemId="download-all-files"
+                              onClick={() => downloadFilesAsZip(activeTabKey === 'conversion-required' ? conversionRequiredResources.map((resource) => resource.file) : uploadCompleteResources.map((resource) => resource.file))}
+                            >
+                              Download all files ({totalPageFiles})
+                            </MenuItem>
+                          </DropdownList>
+                        </Dropdown>
+                      )}
                     </ToolbarItem>
                     <ToolbarItem key="actions-menu">
                       <Dropdown
