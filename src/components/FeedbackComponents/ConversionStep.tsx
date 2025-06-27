@@ -977,6 +977,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
 
   const downloadFilesAsZip = async (files: File[], zipName = 'ingested_documents.zip') => {
     if (files.length === 0) {
+      setDownloadDropdownOpen(false);
       return;
     }
     
