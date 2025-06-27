@@ -44,6 +44,22 @@ const ConversionHeader: React.FunctionComponent<ConversionHeaderProps> = ({ open
         title="Add resources to a workspace"
       >
         <Content component="p" style={{ marginTop: '1rem'}}>
+          Have suggestions/feedback or want to learn more about this demo?{" "}
+          <Content component="a" href="https://docs.google.com/document/d/1Zeahs6F1Bn_0yJiFY6vLqsgcyL1jVvrWC5SYKK0HAZM/edit?usp=sharing" target="_blank" rel="noopener noreferrer">
+            Check out the planning doc
+            <Icon isInline size="sm" style={{ marginLeft: '0.25rem', marginRight: '0.4rem' }}>
+              <ExternalLinkIcon color="#0066CC"/>
+            </Icon>
+          </Content>
+          {" "}(Red Hat employees only) or{" "}
+          <Content component="a" href="https://github.com/Ryfernandes/next-document-ingestion" target="_blank" rel="noopener noreferrer">
+            visit the GitHub repository
+            <Icon isInline size="sm" style={{ marginLeft: '0.25rem', marginRight: '0.4rem' }}>
+              <ExternalLinkIcon color="#0066CC"/>
+            </Icon>
+          </Content>
+        </Content>
+        <Content component="p" style={{ marginTop: '1rem'}}>
           Resources such as textbooks, technical manuals, encyclopedias, journals, or websites are used as the knowledge source for training your model. 
           Files must be converted to Markdown format before being added to the workspace. 
           You can convert files and customize conversion profiles below or use{" "}
