@@ -4,8 +4,8 @@ import { ReactNode } from 'react';
 import '@patternfly/react-core/dist/styles/base.css';
 
 export const metadata = {
-  title: 'InstructLab Document Ingestion',
-  description: 'Updated user interface for document ingestion and conversion in InstructLab'
+  title: 'Document Ingestion Demo',
+  description: 'A modular interface wrapping Docling-Serve to simplify document ingestion for your AI applications'
 }
 
 interface RootLayoutProps {
