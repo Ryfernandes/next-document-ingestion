@@ -12,6 +12,7 @@ import {
 } from '@patternfly/react-core';
 
 import OpenDrawerRightIcon from '@patternfly/react-icons/dist/esm/icons/open-drawer-right-icon';
+import ExternalLinkIcon from '@patternfly/react-icons/dist/esm/icons/external-link-alt-icon';
 
 import React from 'react';
 
@@ -48,8 +49,11 @@ const ConversionHeader: React.FunctionComponent<ConversionHeaderProps> = ({ open
           You can convert files and customize conversion profiles below or use{" "}
             <Content component="a" href="https://github.com/docling-project/docling" target="_blank" rel="noopener noreferrer">
               Docling
+              <Icon isInline size="sm" style={{ marginLeft: '0.25rem', marginRight: '0.4rem' }}>
+                <ExternalLinkIcon color="#0066CC"/>
+              </Icon>
             </Content> 
-          {" "}locally to convert before uploading.{" "}
+          locally to convert before uploading.{" "}
             <Button variant="link" isInline component="span" onClick={handleConversionProfilesClick}>
               Manage conversion profiles
             </Button>

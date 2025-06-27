@@ -190,6 +190,18 @@ const DoclingConfiguration: React.FunctionComponent<DoclingConfigurationProps> =
                 👉 Confirm port
               </Button>
             </FlexItem>
+            <FlexItem>
+              <Button
+                variant="danger"
+                onClick={
+                  () => {
+                    returnPort(port === "" ? '5001' : port);
+                  }
+                }
+              >
+                ⚠️ Continue without confirming
+              </Button>
+            </FlexItem>
           </Flex>
         </Flex>
       </Flex>
@@ -250,7 +262,7 @@ const DoclingConfiguration: React.FunctionComponent<DoclingConfigurationProps> =
             }}
             isLoading={loading}
           >
-            Continue
+            Ok
           </Button>
         </ModalFooter>
       </Modal>

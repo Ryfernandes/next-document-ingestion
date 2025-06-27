@@ -42,6 +42,14 @@
   color: #B1380B;
 }
 
+.pf-v6-c-menu__item.blue-item {
+  color: #0066CC;
+}
+
+.pf-m-disabled .pf-v6-c-menu__item.blue-item {
+  color: #a3a3a3;
+}
+
 .pf-m-disabled .pf-v6-c-menu__item.danger-item {
   color: #a3a3a3;
 }
@@ -102,4 +110,45 @@
 
 .pf-v6-c-tabs__item.pf-m-current.upload-complete-tab-title button {
   background-color: #3D73171a;
+}
+
+.conversion-required-row .pf-v6-c-table__check input, .upload-complete-row .pf-v6-c-table__check input {
+  transform: translateY(2px);
+}
+
+.link-item .pf-v6-c-menu__item-text{
+  color: #0066CC;
+  text-decoration: underline;
+}
+
+.pf-v6-c-tooltip.reduce-z {
+  z-index: 0 !important;
+}
+
+.pf-v6-c-content--a.tooltip-text {
+  font-size: 0.75rem;
+  color: #fff;
+}
+
+.pf-v6-c-menu__item.file-type-option {
+  min-width: 150px;
+}
+
+.pf-v6-c-menu__item.source-option {
+  min-width: 150px;
+}
+
+.filters-dropdown-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.filters-badge {
+  margin-left: 0.25rem;
+  transform: translateY(-1px);
+}
+
+.filter-checkbox {
+  transform: translateY(1px);
+  margin-right: 0.5rem
 }
