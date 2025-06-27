@@ -121,7 +121,8 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
   };
 
   const handleDuplicatesDecision = (action : 'overwrite' | 'keepBoth' |'keepOriginal' | null) => {
-    let toUpload: File[] = [];
+    const duplicateStems = duplicateFilePackages.map(pkg => getFileStem(pkg.file));
+    let toUpload = fromDrop.filter(file => !duplicateStems.includes(getFileStem(file)));
     let toOverwrite: File[] = [];
     let suffixesStems: string[] = [];
     let keepOriginalStems: string[] = [];
@@ -137,8 +138,6 @@ const FileUpload: React.FunctionComponent<FileUploadProps> = ({ workspaceFiles, 
         keepOriginalStems = duplicateFilePackages.map(pkg => getFileStem(pkg.file));
         break;
       default:
-        const duplicateStems = duplicateFilePackages.map(pkg => getFileStem(pkg.file));
-        toUpload = fromDrop.filter(file => !duplicateStems.includes(getFileStem(file)));
         toOverwrite = duplicateFilePackages.filter(pkg => pkg.action === 'overwrite').map(pkg => pkg.file);
         suffixesStems = duplicateFilePackages.filter(pkg => pkg.action === 'keepBoth').map(pkg => getFileStem(pkg.file));
         keepOriginalStems = duplicateFilePackages.filter(pkg => pkg.action === 'keepOriginal').map(pkg => getFileStem(pkg.file));

@@ -504,6 +504,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     setOpenEditConversionProfileDropdown(null);
     setFileActionsDropdownOpen(false);
     setDownloadDropdownOpen(false);
+    setFiltersDropdownOpen(false);
     setConvertDropdownOpen(false);
     setSelectFilesDropdownOpen(false);
 
@@ -524,6 +525,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     setOpenEditConversionProfileDropdown(null);
     setFileActionsDropdownOpen(false);
     setDownloadDropdownOpen(false);
+    setFiltersDropdownOpen(false);
     setConvertDropdownOpen(false);
     setSelectFilesDropdownOpen(false);
 
@@ -542,6 +544,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     setOpenEditConversionProfileDropdown(null);
     setFileActionsDropdownOpen(false);
     setDownloadDropdownOpen(false);
+    setFiltersDropdownOpen(false);
     setConvertDropdownOpen(false);
     setSelectFilesDropdownOpen(false);
 
@@ -1029,6 +1032,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     event: React.MouseEvent | React.KeyboardEvent | MouseEvent,
     tabIndex: string | number
   ) => {
+    setPage(1);
     setActiveTabKey(tabIndex);
     setRecentSelectedRowIndex(null);
   }
@@ -1101,6 +1105,7 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
       setOpenEditConversionProfileDropdown(null);
       setFileActionsDropdownOpen(false);
       setDownloadDropdownOpen(false);
+      setFiltersDropdownOpen(false);
       setConvertDropdownOpen(false);
       setSelectFilesDropdownOpen(false);
 
@@ -1189,6 +1194,8 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
   }, [selectedFilterValues, uploadCompleteResources, searchQuery]);
 
   useEffect(() => {
+    setPage(1);
+
     if (activeTabKey === 'conversion-required') {
       setSelectedFilterValues([...fileTypeOptions]);
     } else {
@@ -1981,9 +1988,9 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
         />
         <ModalBody id="manage-conversion-profiles-variant">
           <Content component="p">
-            Select profiles in the left menu to view and edit their settings. Create new profiles to add a new group of settings. Learn more about the default conversion profiles{" "}
+            Select profiles in the left menu to view and edit their settings. Create new profiles to add a new group of settings.{" "}
               <Content component="a" href="https://github.com/fabianofranz/docling-conversion-tutorials/tree/main" target="_blank" rel="noopener noreferrer">
-                here 
+                Learn more about the default conversion profiles 
                 <Icon isInline size="sm" style={{ marginLeft: '0.25rem', marginRight: '0.4rem' }}>
                   <ExternalLinkIcon color="#0066CC"/>
                 </Icon>
@@ -2015,14 +2022,13 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
             </FlexItem>
             <FlexItem flex={{ default: 'flex_1' }} className={`settings-view-container ${initialViewedProfile.alias === "" ? "green-border" : hasChanged ? "blue-border" : ""}`} ref={settingsViewContainerRef}>
               <Content style={{ fontSize: '0.8rem'}} component="p">
-                Want to learn more about these options? Click{" "}
+                Want to learn more about these options? Reference{" "}
                 <Content style={{ fontSize: '0.8rem' }} component="a" href="https://github.com/docling-project/docling-serve/blob/main/docs/usage.md" target="_blank" rel="noopener noreferrer">
-                  here
+                  Docling's documentation for each parameter
                   <Icon isInline size="sm" style={{ marginLeft: '0.25rem', marginRight: '0.4rem' }}>
                     <ExternalLinkIcon color="#0066CC"/>
                   </Icon>
                 </Content>
-                to find the documentation for each parameter
               </Content>
               <Flex columnGap={{ default: 'columnGap2xl' }}>
                 <FlexItem flex={{ default: 'flex_1' }}>
@@ -2430,6 +2436,14 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
             }}
           >
             Continue
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setConversionErrorMessage(null);
+            }}
+          >
+            Cancel
           </Button>
         </ModalFooter>
       </Modal>
