@@ -1131,6 +1131,16 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
     setSelectFilesDropdownOpen(false);
   }
 
+  const selectFiltered = () => {
+    if (activeTabKey === 'conversion-required') {
+      setSelectedConversionRequiredFileNames(prev => [... new Set([...prev, ...shownConversionRequiredResources.map((resource) => resource.file.name)])]);
+    } else {
+      setSelectedUploadCompleteFileNames(prev => [... new Set([...prev, ...shownUploadCompleteResources.map((resource) => resource.file.name)])]);
+    }
+
+    setSelectFilesDropdownOpen(false);
+  }
+
   // ------ DELETE CONVERSION PROFILES ------
 
   const [showDeleteProfileWarning, setShowDeleteProfileWarning] = useState(false);
@@ -1324,6 +1334,13 @@ const ConversionStep: React.FunctionComponent<ConversionStepProps> = ({ localPor
                           </DropdownItem>
                           <DropdownItem
                             value={2}
+                            key="select-filtered"
+                            onClick={selectFiltered}
+                          >
+                            Select filtered ({totalShownPageFiles})
+                          </DropdownItem>
+                          <DropdownItem
+                            value={3}
                             key="select-all"
                             onClick={() => selectAllFiles(true, true, activeTabKey as string)}
                           >
