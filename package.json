@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.56.0",
     "@patternfly/react-code-editor": "^6.2.2",
     "@patternfly/react-component-groups": "^6.2.1",
     "@patternfly/react-core": "^6.2.2",

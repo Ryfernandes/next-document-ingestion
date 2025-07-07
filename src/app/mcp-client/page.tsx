@@ -20,10 +20,9 @@ const Page = () => {
   const handleSend = async () => {
     setLoading(true);
 
-    alert('Sending query: ' + query);
-
     setTimeout(() => {
       setLoading(false);
+      setQuery('');
     }, 3000);
   }
 
